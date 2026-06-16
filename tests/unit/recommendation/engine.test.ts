@@ -183,4 +183,17 @@ describe('computeRecommendation — required fixtures (Principle VI)', () => {
     expect(rec.entries.every((e) => e.role === 'MIDDLE')).toBe(true)
     expect(rec.entries.map((e) => e.championId).sort()).toEqual([1, 3])
   })
+
+  it('excludes pool champions that are already locked by the enemy', () => {
+    const rec = computeRecommendation(
+      input({
+        role: 'TOP',
+        enemyChampionIds: [5, 10], // enemy locked champs 5 and 10
+        poolEntries: [poolEntry(1, 'TOP'), poolEntry(5, 'TOP'), poolEntry(10, 'TOP'), poolEntry(15, 'TOP')],
+        statRows: [overall(1, 'TOP', 50, 100), overall(5, 'TOP', 55, 100), overall(10, 'TOP', 52, 100), overall(15, 'TOP', 51, 100)]
+      })
+    )
+    // should only include 1 and 15, not 5 or 10 (enemy picks)
+    expect(rec.entries.map((e) => e.championId).sort()).toEqual([1, 15])
+  })
 })

@@ -98,8 +98,12 @@ export function computeRecommendation(input: RecommendationInput): Recommendatio
   // role === null → caller shows the role-selection prompt (FR-007).
   if (role === null) return result
 
-  // Pool + role is the ONLY filter (Principle I). Empty → FR-013 empty state.
-  const candidates = poolEntries.filter((entry) => entry.role === role)
+  // Pool + role is the ONLY filter (Principle I). Exclude enemy picks so we never
+  // recommend a champion your opponent already locked. Empty → FR-013 empty state.
+  const enemyChampionIdSet = new Set(enemyChampionIds)
+  const candidates = poolEntries.filter(
+    (entry) => entry.role === role && !enemyChampionIdSet.has(entry.championId)
+  )
   if (candidates.length === 0) return result
 
   const scored: ScoredCandidate[] = candidates.map((candidate) => {
