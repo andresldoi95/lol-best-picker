@@ -9,6 +9,8 @@ export interface StatsRefreshDeps {
   provider: StatsProvider | null
   stats: StatsRepository
   settings: SettingsRepository
+  /** Invoked after a successful refresh so the UI can re-render with fresh stats. */
+  onRefreshed?: () => void
 }
 
 function isStale(lastFetchAt: string | null, freshnessHours: number, now: number): boolean {
@@ -33,6 +35,7 @@ export function startStatsRefresh(deps: StatsRefreshDeps): () => void {
     try {
       const rows = await deps.provider.fetchChampionStats()
       deps.stats.upsertStats(rows)
+      deps.onRefreshed?.()
     } catch {
       deps.stats.markFetchError()
     }

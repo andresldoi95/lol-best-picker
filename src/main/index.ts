@@ -2,7 +2,7 @@ import { app, BrowserWindow, session } from 'electron'
 import { join } from 'node:path'
 import { createDatabase, type DB } from './db'
 import { seedChampions } from './dataDragon/championRepository'
-import { seedChampionStats, SEED_STATS_PATCH } from './stats/seedData'
+import { seedChampionStats } from './stats/seedData'
 import { PoolRepository } from './db/repositories/poolRepository'
 import { ChampionsRepository } from './db/repositories/championsRepository'
 import { SettingsRepository } from './db/repositories/settingsRepository'
@@ -12,7 +12,7 @@ import { RecommendationService } from './recommendationService'
 import { registerIpcHandlers } from './ipc/handlers'
 import { createLcuAdapter, type LcuClient } from './lcu/champSelectAdapter'
 import { inactiveSession } from './lcu/normalize'
-import { UggStatsProvider } from './stats/uggStatsProvider'
+import { LolalyticsStatsProvider } from './stats/lolalyticsStatsProvider'
 import { startStatsRefresh } from './stats'
 import { IPC } from '@shared/ipcChannels'
 import type { ChampSelectSession } from '@shared/types'
@@ -124,16 +124,14 @@ function wireServices(database: DB): void {
     getChampSelectStatus: () => currentSession
   })
 
-  // Background stats refresh (research.md §1). The u.gg data-feed endpoint must be
-  // provided (env-configured) since it is undocumented/patch-dependent; absent one,
-  // the app runs offline-first on bundled/cached stats.
+  // Background stats refresh (research.md §1). Live win rates come from lolalytics'
+  // server-rendered tier-list pages (no documented JSON API exists; u.gg is
+  // Cloudflare-walled). It's best-effort/fragile, so a failed fetch just downgrades
+  // freshness and the app keeps serving the bundled/cached rows (offline-first).
   const idToKey = new Map<number, string>()
   for (const champion of champions.list()) idToKey.set(champion.championId, champion.key)
-  const endpoint = process.env['LBP_UGG_ENDPOINT']
-  const provider = endpoint
-    ? new UggStatsProvider({ idToKey, patch: SEED_STATS_PATCH, endpoint })
-    : null
-  startStatsRefresh({ provider, stats, settings })
+  const provider = new LolalyticsStatsProvider({ idToKey })
+  startStatsRefresh({ provider, stats, settings, onRefreshed: pushUpdates })
 
   void connectLcu()
 }
