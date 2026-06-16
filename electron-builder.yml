@@ -1,0 +1,30 @@
+appId: com.lolbestpicker.app
+productName: LoL Best Picker
+copyright: Copyright © 2026
+
+directories:
+  output: release
+  buildResources: build
+
+# electron-vite emits the bundled main/preload/renderer to out/.
+files:
+  - out/**/*
+  - package.json
+
+# better-sqlite3 ships a native .node binding that cannot run from inside the asar
+# archive — unpack native modules so they load at runtime.
+asarUnpack:
+  - '**/*.node'
+
+# Rebuild native deps (better-sqlite3) against the bundled Electron ABI at package time.
+npmRebuild: true
+
+win:
+  target:
+    - nsis
+  artifactName: ${productName}-${version}-setup.${ext}
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true

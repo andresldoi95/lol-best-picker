@@ -1,0 +1,44 @@
+{
+  "name": "lol-best-picker",
+  "version": "0.1.0",
+  "description": "Champion Pool Recommender — a focused League of Legends draft assistant that recommends the best pick from your own role-tagged champion pool.",
+  "main": "./out/main/index.js",
+  "author": "LoL Best Picker",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "npm run typecheck && electron-vite build",
+    "preview": "electron-vite preview",
+    "start": "electron-vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
+    "typecheck:web": "vue-tsc --noEmit -p tsconfig.web.json --composite false",
+    "typecheck": "npm run typecheck:node && npm run typecheck:web",
+    "electron:rebuild": "electron-rebuild -f -w better-sqlite3",
+    "package": "npm run build && electron-builder --win"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.10.1",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.0",
+    "vuetify": "^3.7.6"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^3.7.1",
+    "@mdi/font": "^7.4.47",
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^22.10.5",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "electron": "^31.7.7",
+    "electron-builder": "^25.1.8",
+    "electron-vite": "^2.3.0",
+    "sass": "^1.83.1",
+    "typescript": "^5.7.3",
+    "vite": "^5.4.11",
+    "vite-plugin-vuetify": "^2.1.0",
+    "vitest": "^2.1.8",
+    "vue-tsc": "^2.2.0"
+  }
+}

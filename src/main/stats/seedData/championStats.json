@@ -1,0 +1,1523 @@
+{
+  "patch": "16.12",
+  "rows": [
+    {
+      "championKey": "Aatrox",
+      "role": "TOP",
+      "winRate": 50.8,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Ahri",
+      "role": "MIDDLE",
+      "winRate": 51.3,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Akali",
+      "role": "MIDDLE",
+      "winRate": 49.6,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Akali",
+      "role": "TOP",
+      "winRate": 48.4,
+      "gamesPlayed": 18000
+    },
+    {
+      "championKey": "Akshan",
+      "role": "BOTTOM",
+      "winRate": 49.4,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Akshan",
+      "role": "MIDDLE",
+      "winRate": 48.2,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Alistar",
+      "role": "TOP",
+      "winRate": 50.5,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Alistar",
+      "role": "SUPPORT",
+      "winRate": 49.3,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Ambessa",
+      "role": "TOP",
+      "winRate": 50.6,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Ambessa",
+      "role": "MIDDLE",
+      "winRate": 49.4,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Amumu",
+      "role": "JUNGLE",
+      "winRate": 52.3,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Amumu",
+      "role": "SUPPORT",
+      "winRate": 51.1,
+      "gamesPlayed": 18000
+    },
+    {
+      "championKey": "Anivia",
+      "role": "MIDDLE",
+      "winRate": 48.8,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Annie",
+      "role": "MIDDLE",
+      "winRate": 51.8,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Annie",
+      "role": "SUPPORT",
+      "winRate": 50.6,
+      "gamesPlayed": 18000
+    },
+    {
+      "championKey": "Aphelios",
+      "role": "BOTTOM",
+      "winRate": 51.1,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Ashe",
+      "role": "BOTTOM",
+      "winRate": 51.2,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Ashe",
+      "role": "SUPPORT",
+      "winRate": 50,
+      "gamesPlayed": 18000
+    },
+    {
+      "championKey": "AurelionSol",
+      "role": "MIDDLE",
+      "winRate": 48.7,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Aurora",
+      "role": "MIDDLE",
+      "winRate": 49,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Azir",
+      "role": "MIDDLE",
+      "winRate": 50.8,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Azir",
+      "role": "BOTTOM",
+      "winRate": 49.6,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Bard",
+      "role": "SUPPORT",
+      "winRate": 51.1,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Bard",
+      "role": "MIDDLE",
+      "winRate": 49.9,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Belveth",
+      "role": "TOP",
+      "winRate": 50.7,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Blitzcrank",
+      "role": "TOP",
+      "winRate": 48.7,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Blitzcrank",
+      "role": "SUPPORT",
+      "winRate": 47.5,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Brand",
+      "role": "MIDDLE",
+      "winRate": 50.4,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Brand",
+      "role": "SUPPORT",
+      "winRate": 49.2,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Braum",
+      "role": "TOP",
+      "winRate": 49.6,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Braum",
+      "role": "SUPPORT",
+      "winRate": 48.4,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Briar",
+      "role": "TOP",
+      "winRate": 51.4,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Briar",
+      "role": "MIDDLE",
+      "winRate": 50.2,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Caitlyn",
+      "role": "BOTTOM",
+      "winRate": 49.9,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Camille",
+      "role": "TOP",
+      "winRate": 49.6,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Camille",
+      "role": "MIDDLE",
+      "winRate": 48.4,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Cassiopeia",
+      "role": "MIDDLE",
+      "winRate": 50.4,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Chogath",
+      "role": "TOP",
+      "winRate": 50.6,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Chogath",
+      "role": "MIDDLE",
+      "winRate": 49.4,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Corki",
+      "role": "BOTTOM",
+      "winRate": 49.3,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Corki",
+      "role": "MIDDLE",
+      "winRate": 48.1,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Darius",
+      "role": "TOP",
+      "winRate": 51.4,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Diana",
+      "role": "TOP",
+      "winRate": 50.6,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Diana",
+      "role": "MIDDLE",
+      "winRate": 49.4,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Draven",
+      "role": "BOTTOM",
+      "winRate": 49.8,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "DrMundo",
+      "role": "TOP",
+      "winRate": 51.1,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Ekko",
+      "role": "JUNGLE",
+      "winRate": 51,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Ekko",
+      "role": "MIDDLE",
+      "winRate": 49.8,
+      "gamesPlayed": 18000
+    },
+    {
+      "championKey": "Elise",
+      "role": "MIDDLE",
+      "winRate": 49,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Evelynn",
+      "role": "MIDDLE",
+      "winRate": 48.7,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Ezreal",
+      "role": "BOTTOM",
+      "winRate": 49.5,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Fiddlesticks",
+      "role": "MIDDLE",
+      "winRate": 49.8,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Fiddlesticks",
+      "role": "SUPPORT",
+      "winRate": 48.6,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Fiora",
+      "role": "TOP",
+      "winRate": 50.2,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Fizz",
+      "role": "MIDDLE",
+      "winRate": 50.3,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Fizz",
+      "role": "TOP",
+      "winRate": 49.1,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Galio",
+      "role": "TOP",
+      "winRate": 49.2,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Galio",
+      "role": "MIDDLE",
+      "winRate": 48,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Gangplank",
+      "role": "TOP",
+      "winRate": 50.8,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Garen",
+      "role": "TOP",
+      "winRate": 51.9,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Gnar",
+      "role": "TOP",
+      "winRate": 49.4,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Gragas",
+      "role": "TOP",
+      "winRate": 50,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Gragas",
+      "role": "MIDDLE",
+      "winRate": 48.8,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Graves",
+      "role": "JUNGLE",
+      "winRate": 50.4,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Gwen",
+      "role": "TOP",
+      "winRate": 50.1,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Hecarim",
+      "role": "JUNGLE",
+      "winRate": 50.7,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Heimerdinger",
+      "role": "MIDDLE",
+      "winRate": 49.8,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Heimerdinger",
+      "role": "SUPPORT",
+      "winRate": 48.6,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Hwei",
+      "role": "MIDDLE",
+      "winRate": 51,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Hwei",
+      "role": "SUPPORT",
+      "winRate": 49.8,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Illaoi",
+      "role": "TOP",
+      "winRate": 50.3,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Irelia",
+      "role": "TOP",
+      "winRate": 50,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Irelia",
+      "role": "MIDDLE",
+      "winRate": 48.8,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Ivern",
+      "role": "SUPPORT",
+      "winRate": 51.3,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Ivern",
+      "role": "MIDDLE",
+      "winRate": 50.1,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Janna",
+      "role": "SUPPORT",
+      "winRate": 52.1,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "JarvanIV",
+      "role": "TOP",
+      "winRate": 49.8,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Jax",
+      "role": "TOP",
+      "winRate": 50.6,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Jax",
+      "role": "JUNGLE",
+      "winRate": 49.4,
+      "gamesPlayed": 18000
+    },
+    {
+      "championKey": "Jayce",
+      "role": "TOP",
+      "winRate": 49.8,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Jayce",
+      "role": "BOTTOM",
+      "winRate": 48.6,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Jhin",
+      "role": "BOTTOM",
+      "winRate": 51.4,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Jinx",
+      "role": "BOTTOM",
+      "winRate": 51,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Kaisa",
+      "role": "BOTTOM",
+      "winRate": 50.2,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Kalista",
+      "role": "BOTTOM",
+      "winRate": 50.7,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Karma",
+      "role": "SUPPORT",
+      "winRate": 50.7,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Karma",
+      "role": "MIDDLE",
+      "winRate": 49.5,
+      "gamesPlayed": 18000
+    },
+    {
+      "championKey": "Karthus",
+      "role": "MIDDLE",
+      "winRate": 49.7,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Kassadin",
+      "role": "MIDDLE",
+      "winRate": 49.1,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Katarina",
+      "role": "MIDDLE",
+      "winRate": 50.1,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Kayle",
+      "role": "MIDDLE",
+      "winRate": 50.8,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Kayle",
+      "role": "BOTTOM",
+      "winRate": 49.6,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Kayn",
+      "role": "JUNGLE",
+      "winRate": 51.2,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Kennen",
+      "role": "MIDDLE",
+      "winRate": 48.6,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Khazix",
+      "role": "MIDDLE",
+      "winRate": 49,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Kindred",
+      "role": "BOTTOM",
+      "winRate": 49.4,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Kled",
+      "role": "TOP",
+      "winRate": 49.9,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "KogMaw",
+      "role": "BOTTOM",
+      "winRate": 51,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "KogMaw",
+      "role": "MIDDLE",
+      "winRate": 49.8,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "KSante",
+      "role": "TOP",
+      "winRate": 49.5,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Leblanc",
+      "role": "MIDDLE",
+      "winRate": 51.3,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "LeeSin",
+      "role": "JUNGLE",
+      "winRate": 48.9,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Leona",
+      "role": "SUPPORT",
+      "winRate": 50.9,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Lillia",
+      "role": "TOP",
+      "winRate": 50,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Lillia",
+      "role": "MIDDLE",
+      "winRate": 48.8,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Lissandra",
+      "role": "MIDDLE",
+      "winRate": 50.4,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Lucian",
+      "role": "BOTTOM",
+      "winRate": 49.8,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Lucian",
+      "role": "MIDDLE",
+      "winRate": 48.6,
+      "gamesPlayed": 18000
+    },
+    {
+      "championKey": "Lulu",
+      "role": "SUPPORT",
+      "winRate": 51.3,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Lux",
+      "role": "MIDDLE",
+      "winRate": 51.5,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Lux",
+      "role": "SUPPORT",
+      "winRate": 50.3,
+      "gamesPlayed": 18000
+    },
+    {
+      "championKey": "Malphite",
+      "role": "TOP",
+      "winRate": 51.7,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Malphite",
+      "role": "SUPPORT",
+      "winRate": 50.5,
+      "gamesPlayed": 18000
+    },
+    {
+      "championKey": "Malzahar",
+      "role": "MIDDLE",
+      "winRate": 49.7,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Maokai",
+      "role": "TOP",
+      "winRate": 50.5,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Maokai",
+      "role": "SUPPORT",
+      "winRate": 49.3,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "MasterYi",
+      "role": "TOP",
+      "winRate": 51.2,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "MasterYi",
+      "role": "MIDDLE",
+      "winRate": 50,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Mel",
+      "role": "MIDDLE",
+      "winRate": 49.9,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Mel",
+      "role": "SUPPORT",
+      "winRate": 48.7,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Milio",
+      "role": "SUPPORT",
+      "winRate": 48.8,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Milio",
+      "role": "MIDDLE",
+      "winRate": 47.6,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "MissFortune",
+      "role": "BOTTOM",
+      "winRate": 49,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "MissFortune",
+      "role": "MIDDLE",
+      "winRate": 47.8,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "MonkeyKing",
+      "role": "TOP",
+      "winRate": 49.9,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Mordekaiser",
+      "role": "TOP",
+      "winRate": 50.6,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Mordekaiser",
+      "role": "MIDDLE",
+      "winRate": 49.4,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Morgana",
+      "role": "SUPPORT",
+      "winRate": 51,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Morgana",
+      "role": "MIDDLE",
+      "winRate": 49.8,
+      "gamesPlayed": 18000
+    },
+    {
+      "championKey": "Naafiri",
+      "role": "MIDDLE",
+      "winRate": 51.4,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Naafiri",
+      "role": "TOP",
+      "winRate": 50.2,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Nami",
+      "role": "SUPPORT",
+      "winRate": 51.6,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Nasus",
+      "role": "TOP",
+      "winRate": 51.1,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Nautilus",
+      "role": "SUPPORT",
+      "winRate": 50.4,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Neeko",
+      "role": "MIDDLE",
+      "winRate": 48.7,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Neeko",
+      "role": "SUPPORT",
+      "winRate": 47.5,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Nidalee",
+      "role": "MIDDLE",
+      "winRate": 51.3,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Nilah",
+      "role": "TOP",
+      "winRate": 50.4,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Nilah",
+      "role": "MIDDLE",
+      "winRate": 49.2,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Nocturne",
+      "role": "TOP",
+      "winRate": 48.9,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Nocturne",
+      "role": "MIDDLE",
+      "winRate": 47.7,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Nunu",
+      "role": "TOP",
+      "winRate": 49.1,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Nunu",
+      "role": "MIDDLE",
+      "winRate": 47.9,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Olaf",
+      "role": "TOP",
+      "winRate": 49.4,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Orianna",
+      "role": "MIDDLE",
+      "winRate": 50,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Ornn",
+      "role": "TOP",
+      "winRate": 51.1,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Pantheon",
+      "role": "TOP",
+      "winRate": 50.4,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Pantheon",
+      "role": "MIDDLE",
+      "winRate": 49.2,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Poppy",
+      "role": "TOP",
+      "winRate": 50.6,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Pyke",
+      "role": "SUPPORT",
+      "winRate": 49.3,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Pyke",
+      "role": "MIDDLE",
+      "winRate": 48.1,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Qiyana",
+      "role": "MIDDLE",
+      "winRate": 49.2,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Quinn",
+      "role": "BOTTOM",
+      "winRate": 49.2,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Quinn",
+      "role": "MIDDLE",
+      "winRate": 48,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Rakan",
+      "role": "SUPPORT",
+      "winRate": 50.4,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Rammus",
+      "role": "TOP",
+      "winRate": 48.8,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "RekSai",
+      "role": "TOP",
+      "winRate": 50.7,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Rell",
+      "role": "TOP",
+      "winRate": 51.3,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Rell",
+      "role": "SUPPORT",
+      "winRate": 50.1,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Renata",
+      "role": "SUPPORT",
+      "winRate": 49.7,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Renata",
+      "role": "MIDDLE",
+      "winRate": 48.5,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Renekton",
+      "role": "TOP",
+      "winRate": 49.8,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Rengar",
+      "role": "MIDDLE",
+      "winRate": 50.7,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Rengar",
+      "role": "TOP",
+      "winRate": 49.5,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Riven",
+      "role": "TOP",
+      "winRate": 49.3,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Rumble",
+      "role": "TOP",
+      "winRate": 51.4,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Rumble",
+      "role": "MIDDLE",
+      "winRate": 50.2,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Ryze",
+      "role": "MIDDLE",
+      "winRate": 49.8,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Samira",
+      "role": "BOTTOM",
+      "winRate": 49.8,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Samira",
+      "role": "MIDDLE",
+      "winRate": 48.6,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Sejuani",
+      "role": "TOP",
+      "winRate": 50,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Senna",
+      "role": "BOTTOM",
+      "winRate": 50.6,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Senna",
+      "role": "SUPPORT",
+      "winRate": 49.4,
+      "gamesPlayed": 18000
+    },
+    {
+      "championKey": "Seraphine",
+      "role": "SUPPORT",
+      "winRate": 49.9,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Seraphine",
+      "role": "MIDDLE",
+      "winRate": 48.7,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Sett",
+      "role": "TOP",
+      "winRate": 50.9,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Sett",
+      "role": "SUPPORT",
+      "winRate": 49.7,
+      "gamesPlayed": 18000
+    },
+    {
+      "championKey": "Shaco",
+      "role": "MIDDLE",
+      "winRate": 49.5,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Shen",
+      "role": "TOP",
+      "winRate": 48.9,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Shyvana",
+      "role": "TOP",
+      "winRate": 49.5,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Singed",
+      "role": "TOP",
+      "winRate": 49.1,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Singed",
+      "role": "MIDDLE",
+      "winRate": 47.9,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Sion",
+      "role": "TOP",
+      "winRate": 49.6,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Sivir",
+      "role": "BOTTOM",
+      "winRate": 50.2,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Skarner",
+      "role": "TOP",
+      "winRate": 50.6,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Smolder",
+      "role": "BOTTOM",
+      "winRate": 50,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Smolder",
+      "role": "MIDDLE",
+      "winRate": 48.8,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Sona",
+      "role": "SUPPORT",
+      "winRate": 52,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Soraka",
+      "role": "SUPPORT",
+      "winRate": 51.8,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Swain",
+      "role": "MIDDLE",
+      "winRate": 50,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Swain",
+      "role": "SUPPORT",
+      "winRate": 48.8,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Sylas",
+      "role": "MIDDLE",
+      "winRate": 50.3,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Syndra",
+      "role": "MIDDLE",
+      "winRate": 49.7,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "TahmKench",
+      "role": "TOP",
+      "winRate": 50.9,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "TahmKench",
+      "role": "SUPPORT",
+      "winRate": 49.7,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Taliyah",
+      "role": "MIDDLE",
+      "winRate": 48.9,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Taliyah",
+      "role": "SUPPORT",
+      "winRate": 47.7,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Talon",
+      "role": "MIDDLE",
+      "winRate": 48.8,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Taric",
+      "role": "SUPPORT",
+      "winRate": 50.5,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Taric",
+      "role": "TOP",
+      "winRate": 49.3,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Teemo",
+      "role": "BOTTOM",
+      "winRate": 50.6,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Teemo",
+      "role": "MIDDLE",
+      "winRate": 49.4,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Thresh",
+      "role": "SUPPORT",
+      "winRate": 49.6,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Tristana",
+      "role": "BOTTOM",
+      "winRate": 50.1,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Tristana",
+      "role": "MIDDLE",
+      "winRate": 48.9,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Trundle",
+      "role": "TOP",
+      "winRate": 50.6,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Tryndamere",
+      "role": "TOP",
+      "winRate": 51.3,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Tryndamere",
+      "role": "MIDDLE",
+      "winRate": 50.1,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "TwistedFate",
+      "role": "MIDDLE",
+      "winRate": 48.8,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "TwistedFate",
+      "role": "BOTTOM",
+      "winRate": 47.6,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Twitch",
+      "role": "BOTTOM",
+      "winRate": 49.4,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Twitch",
+      "role": "MIDDLE",
+      "winRate": 48.2,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Udyr",
+      "role": "TOP",
+      "winRate": 48.5,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Urgot",
+      "role": "TOP",
+      "winRate": 50.5,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Varus",
+      "role": "BOTTOM",
+      "winRate": 50.8,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Varus",
+      "role": "MIDDLE",
+      "winRate": 49.6,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Vayne",
+      "role": "BOTTOM",
+      "winRate": 50,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Vayne",
+      "role": "TOP",
+      "winRate": 48.8,
+      "gamesPlayed": 18000
+    },
+    {
+      "championKey": "Veigar",
+      "role": "MIDDLE",
+      "winRate": 51.6,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Velkoz",
+      "role": "MIDDLE",
+      "winRate": 49.8,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Velkoz",
+      "role": "SUPPORT",
+      "winRate": 48.6,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Vex",
+      "role": "MIDDLE",
+      "winRate": 49.5,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Vi",
+      "role": "JUNGLE",
+      "winRate": 50.5,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Viego",
+      "role": "TOP",
+      "winRate": 48.8,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Viego",
+      "role": "MIDDLE",
+      "winRate": 47.6,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Viktor",
+      "role": "MIDDLE",
+      "winRate": 50.8,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Vladimir",
+      "role": "MIDDLE",
+      "winRate": 50.6,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Vladimir",
+      "role": "TOP",
+      "winRate": 49.4,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Volibear",
+      "role": "TOP",
+      "winRate": 51,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Warwick",
+      "role": "TOP",
+      "winRate": 50.2,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Xayah",
+      "role": "BOTTOM",
+      "winRate": 51.2,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Xerath",
+      "role": "MIDDLE",
+      "winRate": 50.5,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Xerath",
+      "role": "SUPPORT",
+      "winRate": 49.3,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "XinZhao",
+      "role": "TOP",
+      "winRate": 49.7,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Yasuo",
+      "role": "MIDDLE",
+      "winRate": 49.1,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Yasuo",
+      "role": "BOTTOM",
+      "winRate": 47.9,
+      "gamesPlayed": 18000
+    },
+    {
+      "championKey": "Yone",
+      "role": "MIDDLE",
+      "winRate": 49.4,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Yone",
+      "role": "TOP",
+      "winRate": 48.2,
+      "gamesPlayed": 18000
+    },
+    {
+      "championKey": "Yorick",
+      "role": "TOP",
+      "winRate": 48.8,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Yunara",
+      "role": "BOTTOM",
+      "winRate": 49,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Yuumi",
+      "role": "SUPPORT",
+      "winRate": 50.9,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Yuumi",
+      "role": "MIDDLE",
+      "winRate": 49.7,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Zaahen",
+      "role": "TOP",
+      "winRate": 50.9,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Zaahen",
+      "role": "MIDDLE",
+      "winRate": 49.7,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Zac",
+      "role": "TOP",
+      "winRate": 50.5,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Zed",
+      "role": "MIDDLE",
+      "winRate": 49.7,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Zeri",
+      "role": "BOTTOM",
+      "winRate": 49.2,
+      "gamesPlayed": 60000
+    },
+    {
+      "championKey": "Ziggs",
+      "role": "MIDDLE",
+      "winRate": 48.9,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Zilean",
+      "role": "SUPPORT",
+      "winRate": 49.5,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Zilean",
+      "role": "MIDDLE",
+      "winRate": 48.3,
+      "gamesPlayed": 6000
+    },
+    {
+      "championKey": "Zoe",
+      "role": "MIDDLE",
+      "winRate": 48.8,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Zyra",
+      "role": "MIDDLE",
+      "winRate": 48.5,
+      "gamesPlayed": 12000
+    },
+    {
+      "championKey": "Zyra",
+      "role": "SUPPORT",
+      "winRate": 47.3,
+      "gamesPlayed": 6000
+    }
+  ]
+}

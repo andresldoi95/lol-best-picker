@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+out/
+release/
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+npm-install.log
+
+# Environment
+.env
+.env.*
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+
+# Native module build artifacts
+build/Release/
+prebuilds/
