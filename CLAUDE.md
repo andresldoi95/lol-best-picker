@@ -183,3 +183,12 @@ src/
 3. Verify formatting: `npm run format:check`
 4. Run type checking: `npm run typecheck`
 5. Test production build: `npm run build`
+
+<!-- SPECKIT START -->
+## Active Feature Plan
+
+**Feature**: Composition-Aware Recommendations
+**Branch**: `002-team-composition-recs`
+**Plan**: [specs/002-team-composition-recs/plan.md](specs/002-team-composition-recs/plan.md)
+**Spec**: [specs/002-team-composition-recs/spec.md](specs/002-team-composition-recs/spec.md)
+<!-- SPECKIT END -->
