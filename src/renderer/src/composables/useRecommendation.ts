@@ -2,6 +2,9 @@ import { ref, readonly } from 'vue'
 import type { Recommendation } from '@shared/types'
 
 // Shared reactive recommendation, kept in sync with main-process push events.
+// Each entry carries its `scoreBreakdown` (enemyMatchupScore, allysSynergyScore,
+// combinedScore, activeSignals) and the recommendation echoes `allyChampionIds`,
+// so the score-breakdown panel (US3 / FR-009) reads everything from this ref.
 const recommendation = ref<Recommendation | null>(null)
 const loading = ref(false)
 let unsubscribe: (() => void) | null = null

@@ -26,14 +26,18 @@ interface GameflowLobby {
   gameConfig?: { queueId?: number }
 }
 
-/** Stable identity of a session for change detection (ignores the timestamp). */
+/** Stable identity of a session for change detection (ignores the timestamp).
+ *  Ally picks are part of the fingerprint so an ally lock-in is treated as a
+ *  meaningful change and triggers a refresh within 1 second (spec 002 SC-001,
+ *  ipc-api.md). Ids are sorted so reordering between polls is not a false change. */
 function sessionKey(session: ChampSelectSession | null): string {
   if (!session) return 'null'
   return JSON.stringify({
     active: session.active,
     phase: session.phase,
     assignedRole: session.assignedRole,
-    enemies: session.enemyChampionIds
+    enemies: [...session.enemyChampionIds].sort((a, b) => a - b),
+    allies: [...session.allyChampionIds].sort((a, b) => a - b)
   })
 }
 

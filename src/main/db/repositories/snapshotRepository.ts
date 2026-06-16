@@ -4,6 +4,7 @@ import type { Role } from '@shared/types'
 export interface ChampSelectSnapshot {
   assignedRole: Role | null
   enemyChampionIds: number[]
+  allyChampionIds: number[]
   sessionActive: boolean
   /** ISO-8601 timestamp of the last update. */
   updatedAt: string
@@ -12,6 +13,7 @@ export interface ChampSelectSnapshot {
 interface SnapshotRow {
   assigned_role: Role | null
   enemy_champion_ids: string
+  ally_champion_ids: string
   session_active: number
   updated_at: string
 }
@@ -19,6 +21,7 @@ interface SnapshotRow {
 const EMPTY: ChampSelectSnapshot = {
   assignedRole: null,
   enemyChampionIds: [],
+  allyChampionIds: [],
   sessionActive: false,
   updatedAt: '1970-01-01T00:00:00.000Z'
 }
@@ -34,24 +37,17 @@ export class SnapshotRepository {
   get(): ChampSelectSnapshot {
     const row = this.db
       .prepare(
-        `SELECT assigned_role, enemy_champion_ids, session_active, updated_at
+        `SELECT assigned_role, enemy_champion_ids, ally_champion_ids, session_active, updated_at
          FROM champ_select_snapshot WHERE id = 1`
       )
       .get() as SnapshotRow | undefined
 
     if (!row) return { ...EMPTY }
 
-    let enemyChampionIds: number[] = []
-    try {
-      const parsed = JSON.parse(row.enemy_champion_ids) as unknown
-      if (Array.isArray(parsed)) enemyChampionIds = parsed.filter((n) => typeof n === 'number')
-    } catch {
-      enemyChampionIds = []
-    }
-
     return {
       assignedRole: row.assigned_role,
-      enemyChampionIds,
+      enemyChampionIds: parseIdArray(row.enemy_champion_ids),
+      allyChampionIds: parseIdArray(row.ally_champion_ids),
       sessionActive: row.session_active === 1,
       updatedAt: row.updated_at
     }
@@ -69,6 +65,7 @@ export class SnapshotRepository {
         `UPDATE champ_select_snapshot
          SET assigned_role = @assignedRole,
              enemy_champion_ids = @enemyChampionIds,
+             ally_champion_ids = @allyChampionIds,
              session_active = @sessionActive,
              updated_at = @updatedAt
          WHERE id = 1`
@@ -76,9 +73,20 @@ export class SnapshotRepository {
       .run({
         assignedRole: next.assignedRole,
         enemyChampionIds: JSON.stringify(next.enemyChampionIds),
+        allyChampionIds: JSON.stringify(next.allyChampionIds),
         sessionActive: next.sessionActive ? 1 : 0,
         updatedAt: next.updatedAt
       })
+  }
+}
+
+/** Parse a JSON champion-id array column, tolerating malformed/non-array values. */
+function parseIdArray(json: string): number[] {
+  try {
+    const parsed = JSON.parse(json) as unknown
+    return Array.isArray(parsed) ? parsed.filter((n): n is number => typeof n === 'number') : []
+  } catch {
+    return []
   }
 }
 

@@ -5,6 +5,7 @@ import { PoolRepository } from '@main/db/repositories/poolRepository'
 import { ChampionsRepository } from '@main/db/repositories/championsRepository'
 import { SettingsRepository } from '@main/db/repositories/settingsRepository'
 import { StatsRepository } from '@main/db/repositories/statsRepository'
+import { SynergyRepository } from '@main/db/repositories/synergyRepository'
 import { RecommendationService } from '@main/recommendationService'
 import { createTempDbFile, openSeededDb } from '../helpers/db'
 import type { DB } from '@main/db'
@@ -32,6 +33,7 @@ describe('IPC handler map (contract)', () => {
     const champions = new ChampionsRepository(db)
     const settings = new SettingsRepository(db)
     const stats = new StatsRepository(db)
+    const synergy = new SynergyRepository(db)
 
     session = {
       active: true,
@@ -39,10 +41,11 @@ describe('IPC handler map (contract)', () => {
       assignedRole: 'MIDDLE',
       localPlayerCellId: 0,
       enemyChampionIds: [],
+      allyChampionIds: [],
       updatedAt: new Date().toISOString()
     }
 
-    const recService = new RecommendationService(pool, stats, settings, () => session)
+    const recService = new RecommendationService(pool, stats, synergy, settings, () => session)
 
     return createHandlerMap({
       pool,

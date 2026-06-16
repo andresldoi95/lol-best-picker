@@ -7,12 +7,14 @@ import { PoolRepository } from './db/repositories/poolRepository'
 import { ChampionsRepository } from './db/repositories/championsRepository'
 import { SettingsRepository } from './db/repositories/settingsRepository'
 import { StatsRepository } from './db/repositories/statsRepository'
+import { SynergyRepository } from './db/repositories/synergyRepository'
 import { SnapshotRepository } from './db/repositories/snapshotRepository'
 import { RecommendationService } from './recommendationService'
 import { registerIpcHandlers } from './ipc/handlers'
 import { createLcuAdapter, type LcuClient } from './lcu/champSelectAdapter'
 import { inactiveSession } from './lcu/normalize'
 import { LolalyticsStatsProvider } from './stats/lolalyticsStatsProvider'
+import { LolalyticsMatchupProvider } from './stats/lolalyticsMatchupProvider'
 import { startStatsRefresh } from './stats'
 import { IPC } from '@shared/ipcChannels'
 import type { ChampSelectSession } from '@shared/types'
@@ -54,6 +56,7 @@ function persistSnapshot(): void {
   snapshotRepository?.update({
     assignedRole: currentSession.assignedRole,
     enemyChampionIds: currentSession.enemyChampionIds,
+    allyChampionIds: currentSession.allyChampionIds,
     sessionActive: currentSession.active
   })
 }
@@ -100,6 +103,7 @@ function wireServices(database: DB): void {
   const champions = new ChampionsRepository(database)
   const settings = new SettingsRepository(database)
   const stats = new StatsRepository(database)
+  const synergy = new SynergyRepository(database)
   snapshotRepository = new SnapshotRepository(database)
 
   // Hydrate the initial session from the last-known snapshot so a recommendation
@@ -111,10 +115,11 @@ function wireServices(database: DB): void {
     assignedRole: snapshot.assignedRole,
     localPlayerCellId: null,
     enemyChampionIds: snapshot.enemyChampionIds,
+    allyChampionIds: snapshot.allyChampionIds,
     updatedAt: snapshot.updatedAt
   }
 
-  recommendationService = new RecommendationService(pool, stats, settings, () => currentSession)
+  recommendationService = new RecommendationService(pool, stats, synergy, settings, () => currentSession)
 
   registerIpcHandlers({
     pool,
@@ -129,9 +134,23 @@ function wireServices(database: DB): void {
   // Cloudflare-walled). It's best-effort/fragile, so a failed fetch just downgrades
   // freshness and the app keeps serving the bundled/cached rows (offline-first).
   const idToKey = new Map<number, string>()
-  for (const champion of champions.list()) idToKey.set(champion.championId, champion.key)
+  const keyToId = new Map<string, number>()
+  for (const champion of champions.list()) {
+    idToKey.set(champion.championId, champion.key)
+    keyToId.set(champion.key, champion.championId)
+  }
   const provider = new LolalyticsStatsProvider({ idToKey })
-  startStatsRefresh({ provider, stats, settings, onRefreshed: pushUpdates })
+  // Pool-scoped ally synergy, fetched on the same cycle (spec 002, research.md §5).
+  const synergyProvider = new LolalyticsMatchupProvider({ idToKey, keyToId })
+  startStatsRefresh({
+    provider,
+    stats,
+    settings,
+    synergyProvider,
+    synergy,
+    getSynergyTargets: () => pool.list().map((entry) => ({ championKey: entry.key, role: entry.role })),
+    onRefreshed: pushUpdates
+  })
 
   void connectLcu()
 }

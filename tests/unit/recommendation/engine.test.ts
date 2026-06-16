@@ -3,7 +3,8 @@ import {
   computeRecommendation,
   type PoolEntryInput,
   type RecommendationInput,
-  type StatRowInput
+  type StatRowInput,
+  type SynergyRowInput
 } from '@recommendation/engine'
 import type { Role } from '@shared/types'
 
@@ -34,12 +35,24 @@ function matchup(
   return { championId, role, opponentChampionId, winRate, gamesPlayed }
 }
 
+function synergy(
+  championId: number,
+  role: Role,
+  allyChampionId: number,
+  winRate: number,
+  gamesPlayed: number
+): SynergyRowInput {
+  return { championId, role, allyChampionId, winRate, gamesPlayed }
+}
+
 function input(overrides: Partial<RecommendationInput>): RecommendationInput {
   return {
     poolEntries: [],
     statRows: [],
+    synergyRows: [],
     role: 'MIDDLE',
     enemyChampionIds: [],
+    allyChampionIds: [],
     statsAsOfPatch: '14.12',
     freshness: {
       lastFetchAt: NOW,
@@ -195,5 +208,126 @@ describe('computeRecommendation — required fixtures (Principle VI)', () => {
     )
     // should only include 1 and 15, not 5 or 10 (enemy picks)
     expect(rec.entries.map((e) => e.championId).sort()).toEqual([1, 15])
+  })
+})
+
+describe('computeRecommendation — composition-aware combined scoring (spec 002, Principle VI)', () => {
+  // Fixture 1 — no allies locked in → enemy-only score, identical to spec-001 behavior.
+  it('with no allies, scores enemy-only (combined === enemy matchup score)', () => {
+    const rec = computeRecommendation(
+      input({
+        role: 'MIDDLE',
+        enemyChampionIds: [99],
+        allyChampionIds: [],
+        poolEntries: [poolEntry(1, 'MIDDLE')],
+        statRows: [matchup(1, 'MIDDLE', 99, 45, 50), overall(1, 'MIDDLE', 52, 800)]
+      })
+    )
+    const entry = rec.entries[0]
+    expect(entry.score).toBe(45)
+    expect(entry.scoreBasis).toBe('matchup')
+    expect(entry.scoreBreakdown.combinedScore).toBe(45)
+    expect(entry.scoreBreakdown.activeSignals).toEqual(['enemy-matchup'])
+    expect(rec.allyChampionIds).toEqual([])
+  })
+
+  // Fixture 2 — allies present but NO synergy data → ally component uses overall WR.
+  it('uses overall WR for the ally component when no synergy rows exist', () => {
+    const rec = computeRecommendation(
+      input({
+        role: 'MIDDLE',
+        enemyChampionIds: [99],
+        allyChampionIds: [21],
+        poolEntries: [poolEntry(1, 'MIDDLE')],
+        statRows: [matchup(1, 'MIDDLE', 99, 48, 100), overall(1, 'MIDDLE', 54, 500)],
+        synergyRows: []
+      })
+    )
+    const entry = rec.entries[0]
+    // combined = 0.5 * 48 (enemy matchup) + 0.5 * 54 (ally overall fallback) = 51
+    expect(entry.score).toBe(51)
+    expect(entry.scoreBasis).toBe('combined')
+    expect(entry.scoreBreakdown.enemyMatchupScore).toBe(48)
+    expect(entry.scoreBreakdown.allysSynergyScore).toBe(54)
+    expect(entry.scoreBreakdown.activeSignals).toEqual(['enemy-matchup', 'overall'])
+  })
+
+  // Fixture 3 — single ally with synergy data → combined = 0.5*enemy + 0.5*ally.
+  it('combines a single ally synergy 50/50 with the enemy matchup', () => {
+    const rec = computeRecommendation(
+      input({
+        role: 'MIDDLE',
+        enemyChampionIds: [99],
+        allyChampionIds: [21],
+        poolEntries: [poolEntry(1, 'MIDDLE')],
+        statRows: [matchup(1, 'MIDDLE', 99, 50, 200), overall(1, 'MIDDLE', 50, 500)],
+        synergyRows: [synergy(1, 'MIDDLE', 21, 60, 300)]
+      })
+    )
+    const entry = rec.entries[0]
+    // combined = 0.5 * 50 + 0.5 * 60 = 55
+    expect(entry.score).toBe(55)
+    expect(entry.scoreBasis).toBe('combined')
+    expect(entry.scoreBreakdown.enemyMatchupScore).toBe(50)
+    expect(entry.scoreBreakdown.allysSynergyScore).toBe(60)
+    expect(entry.scoreBreakdown.activeSignals).toEqual(['enemy-matchup', 'ally-synergy'])
+    expect(rec.allyChampionIds).toEqual([21])
+  })
+
+  // Fixture 4 — multiple allies → pairwise-average synergy, then 50/50 with enemy.
+  it('averages synergy across multiple allies before the 50/50 combine', () => {
+    const rec = computeRecommendation(
+      input({
+        role: 'MIDDLE',
+        enemyChampionIds: [99],
+        allyChampionIds: [21, 22],
+        poolEntries: [poolEntry(1, 'MIDDLE')],
+        statRows: [matchup(1, 'MIDDLE', 99, 40, 100), overall(1, 'MIDDLE', 50, 500)],
+        synergyRows: [synergy(1, 'MIDDLE', 21, 60, 300), synergy(1, 'MIDDLE', 22, 70, 200)]
+      })
+    )
+    const entry = rec.entries[0]
+    // ally avg = (60 + 70) / 2 = 65; combined = 0.5 * 40 + 0.5 * 65 = 52.5
+    expect(entry.scoreBreakdown.allysSynergyScore).toBeCloseTo(65)
+    expect(entry.score).toBeCloseTo(52.5)
+  })
+
+  // Fixture 5 — a pool champion already locked in by an ally is excluded (FR-010).
+  it('excludes pool champions that are already locked by an ally', () => {
+    const rec = computeRecommendation(
+      input({
+        role: 'TOP',
+        enemyChampionIds: [],
+        allyChampionIds: [5], // ally already locked champ 5
+        poolEntries: [poolEntry(1, 'TOP'), poolEntry(5, 'TOP'), poolEntry(15, 'TOP')],
+        statRows: [overall(1, 'TOP', 50, 100), overall(5, 'TOP', 55, 100), overall(15, 'TOP', 51, 100)]
+      })
+    )
+    expect(rec.entries.map((e) => e.championId).sort()).toEqual([1, 15])
+    expect(rec.entries.some((e) => e.championId === 5)).toBe(false)
+  })
+
+  // Fixture 6 — conflicting signals: strong vs enemy but weak synergy loses to the
+  // reverse, because the combined 50/50 score drives ranking (not enemy-only).
+  it('ranks by the combined score when enemy and ally signals conflict', () => {
+    const rec = computeRecommendation(
+      input({
+        role: 'MIDDLE',
+        enemyChampionIds: [99],
+        allyChampionIds: [21],
+        poolEntries: [poolEntry(1, 'MIDDLE'), poolEntry(2, 'MIDDLE')],
+        statRows: [
+          matchup(1, 'MIDDLE', 99, 70, 100), overall(1, 'MIDDLE', 60, 500), // champ1: strong vs enemy
+          matchup(2, 'MIDDLE', 99, 45, 100), overall(2, 'MIDDLE', 50, 500) // champ2: weak vs enemy
+        ],
+        synergyRows: [
+          synergy(1, 'MIDDLE', 21, 40, 200), // champ1: poor synergy
+          synergy(2, 'MIDDLE', 21, 80, 200) // champ2: great synergy
+        ]
+      })
+    )
+    // champ1 combined = 0.5*70 + 0.5*40 = 55; champ2 combined = 0.5*45 + 0.5*80 = 62.5
+    expect(rec.entries.map((e) => e.championId)).toEqual([2, 1])
+    expect(rec.entries[0].score).toBeCloseTo(62.5)
   })
 })

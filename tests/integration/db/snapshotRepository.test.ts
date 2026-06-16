@@ -23,12 +23,14 @@ describe('SnapshotRepository (integration against a temp SQLite file)', () => {
     expect(initial).toMatchObject({
       assignedRole: null,
       enemyChampionIds: [],
+      allyChampionIds: [],
       sessionActive: false
     })
 
     new SnapshotRepository(db).update({
       assignedRole: 'TOP',
       enemyChampionIds: [266, 103],
+      allyChampionIds: [21, 412],
       sessionActive: true
     })
 
@@ -36,15 +38,17 @@ describe('SnapshotRepository (integration against a temp SQLite file)', () => {
     expect(afterUpdate).toMatchObject({
       assignedRole: 'TOP',
       enemyChampionIds: [266, 103],
+      allyChampionIds: [21, 412],
       sessionActive: true
     })
     expect(typeof afterUpdate.updatedAt).toBe('string')
 
-    // a partial update preserves untouched fields
+    // a partial update preserves untouched fields (incl. allyChampionIds)
     new SnapshotRepository(db).update({ sessionActive: false })
     expect(new SnapshotRepository(db).get()).toMatchObject({
       assignedRole: 'TOP',
       enemyChampionIds: [266, 103],
+      allyChampionIds: [21, 412],
       sessionActive: false
     })
 
@@ -53,7 +57,8 @@ describe('SnapshotRepository (integration against a temp SQLite file)', () => {
     db = openSeededDb(file.path)
     expect(new SnapshotRepository(db).get()).toMatchObject({
       assignedRole: 'TOP',
-      enemyChampionIds: [266, 103]
+      enemyChampionIds: [266, 103],
+      allyChampionIds: [21, 412]
     })
   })
 

@@ -57,6 +57,8 @@ export interface ChampSelectSession {
   localPlayerCellId: number | null
   /** Revealed enemy picks only (locked-in), never bans. */
   enemyChampionIds: number[]
+  /** Locked-in ally picks (championId > 0), excluding the local player (spec 002 FR-001). */
+  allyChampionIds: number[]
   /** ISO-8601 timestamp. */
   updatedAt: string
 }
@@ -64,8 +66,24 @@ export interface ChampSelectSession {
 export type Freshness = 'live' | 'cached' | 'stale'
 
 /** `'matchup'` = scored vs. revealed enemies; `'overall'` = no enemies revealed or
- *  FR-017 fallback to the overall row. */
-export type ScoreBasis = 'matchup' | 'overall'
+ *  FR-017 fallback to the overall row; `'combined'` = both enemy-matchup and
+ *  ally-synergy signals were active (spec 002). */
+export type ScoreBasis = 'matchup' | 'overall' | 'combined'
+
+/** Which signal(s) contributed to a `RecommendationEntry`'s combined score (spec 002). */
+export type ActiveSignal = 'enemy-matchup' | 'ally-synergy' | 'overall'
+
+/** Per-entry breakdown of the two scoring signals, for the score-breakdown UI (US3, FR-009). */
+export interface ScoreBreakdown {
+  /** Enemy-matchup component: avg WR vs revealed enemies (or overall fallback). */
+  enemyMatchupScore: number
+  /** Ally-synergy component: avg WR with locked-in allies (or overall fallback). */
+  allysSynergyScore: number
+  /** Weighted aggregate = the entry's top-level `score`. 50% each when both active. */
+  combinedScore: number
+  /** Which signals contributed to `combinedScore`. */
+  activeSignals: ActiveSignal[]
+}
 
 export interface RecommendationEntry {
   championId: number
@@ -73,11 +91,13 @@ export interface RecommendationEntry {
   championName: string
   iconPath: string
   role: Role
-  /** Win-rate percentage used for ranking. */
+  /** Combined score (0–100) used for ranking. Was enemy-only WR in spec 001. */
   score: number
   scoreBasis: ScoreBasis
   /** True if `champions.is_active = 0` (FR-018) — included, not excluded. */
   isFlagged: boolean
+  /** Full signal breakdown for the score-breakdown UI (spec 002 US3). */
+  scoreBreakdown: ScoreBreakdown
 }
 
 export interface Recommendation {
@@ -87,6 +107,8 @@ export interface Recommendation {
   entries: RecommendationEntry[]
   /** Context used for ranking (echoes the session). */
   enemyChampionIds: number[]
+  /** Ally context used for ranking (echoes the session, spec 002). */
+  allyChampionIds: number[]
   freshness: Freshness
   statsAsOfPatch: string
   /** ISO-8601 — drives the "last updated" indicator (FR-014). */

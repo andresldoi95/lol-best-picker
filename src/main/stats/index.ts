@@ -1,5 +1,7 @@
 import type { StatsProvider } from './statsProvider'
+import type { SynergyProvider, SynergyProviderTarget } from './synergyProvider'
 import type { StatsRepository } from '../db/repositories/statsRepository'
+import type { SynergyRepository } from '../db/repositories/synergyRepository'
 import type { SettingsRepository } from '../db/repositories/settingsRepository'
 
 const REFRESH_INTERVAL_MS = 24 * 60 * 60 * 1000
@@ -9,6 +11,12 @@ export interface StatsRefreshDeps {
   provider: StatsProvider | null
   stats: StatsRepository
   settings: SettingsRepository
+  /** Ally-synergy provider, or null/omitted when synergy refresh is disabled. */
+  synergyProvider?: SynergyProvider | null
+  /** Persists fetched synergy rows; required when `synergyProvider` is set. */
+  synergy?: SynergyRepository
+  /** Supplies the current pool's (championKey, role) pairs to fetch synergy for. */
+  getSynergyTargets?: () => SynergyProviderTarget[]
   /** Invoked after a successful refresh so the UI can re-render with fresh stats. */
   onRefreshed?: () => void
 }
@@ -35,6 +43,10 @@ export function startStatsRefresh(deps: StatsRefreshDeps): () => void {
     try {
       const rows = await deps.provider.fetchChampionStats()
       deps.stats.upsertStats(rows)
+      // Refresh pool-scoped ally synergy in the same cycle (research.md §5). This is
+      // best-effort: a synergy failure is logged but does not fail the overall
+      // refresh — the engine falls back to overall WR for the ally component.
+      await refreshSynergy(deps)
       deps.onRefreshed?.()
     } catch {
       deps.stats.markFetchError()
@@ -44,4 +56,16 @@ export function startStatsRefresh(deps: StatsRefreshDeps): () => void {
   void run()
   const interval = setInterval(() => void run(), REFRESH_INTERVAL_MS)
   return () => clearInterval(interval)
+}
+
+async function refreshSynergy(deps: StatsRefreshDeps): Promise<void> {
+  if (!deps.synergyProvider || !deps.synergy || !deps.getSynergyTargets) return
+  const targets = deps.getSynergyTargets()
+  if (targets.length === 0) return
+  try {
+    const rows = await deps.synergyProvider.fetchSynergyStats(targets)
+    if (rows.length > 0) deps.synergy.upsertSynergy(rows)
+  } catch (err) {
+    console.warn(`synergy refresh failed: ${(err as Error).message}`)
+  }
 }

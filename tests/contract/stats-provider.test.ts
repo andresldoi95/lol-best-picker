@@ -94,8 +94,10 @@ describe('StatsProvider contract + repository persistence', () => {
         }
       ],
       statRows: rows,
+      synergyRows: [],
       role: 'MIDDLE',
       enemyChampionIds: [ZED],
+      allyChampionIds: [],
       statsAsOfPatch: patch,
       freshness: { lastFetchAt: null, lastFetchStatus: null, thresholdHours: 24, now: new Date().toISOString() }
     })

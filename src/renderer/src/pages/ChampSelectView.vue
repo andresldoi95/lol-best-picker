@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
-import { ROLES, type Role } from '@shared/types'
+import { ROLES, type Role, type ScoreBreakdown } from '@shared/types'
 import { useRecommendation } from '@renderer/composables/useRecommendation'
 import { useChampSelect } from '@renderer/composables/useChampSelect'
 import { useSettings } from '@renderer/composables/useSettings'
@@ -55,11 +55,69 @@ const enemyChampions = computed(() =>
   }))
 )
 
+const allyChampions = computed(() =>
+  (recommendation.value?.allyChampionIds ?? []).map((id) => ({
+    id,
+    iconPath: iconById.value.get(id) ?? ''
+  }))
+)
+
+// Which signals are active is a property of the whole recommendation context, so
+// all entries share the same weighting (FR-009 / US3).
+const hasEnemy = computed(() => (recommendation.value?.enemyChampionIds.length ?? 0) > 0)
+const hasAlly = computed(() => (recommendation.value?.allyChampionIds.length ?? 0) > 0)
+const signalWeight = computed(() => (hasEnemy.value && hasAlly.value ? '50%' : '100%'))
+
+interface SignalBlock {
+  key: string
+  label: string
+  value: string
+  weight: string
+  available: boolean
+}
+
+// Only the numeric components are read here (not activeSignals), so accept a
+// minimal shape — this also avoids the DeepReadonly array mismatch from the
+// composable's readonly() wrapper.
+type BreakdownScores = Pick<ScoreBreakdown, 'enemyMatchupScore' | 'allysSynergyScore' | 'combinedScore'>
+
+/** Per-signal blocks for the score-breakdown panel. When a signal is inactive it
+ *  is shown as "Not available" with no weight (US3 AC3). */
+function breakdownBlocks(bd: BreakdownScores): SignalBlock[] {
+  if (!hasEnemy.value && !hasAlly.value) {
+    return [
+      { key: 'overall', label: 'Overall win rate', value: formatScore(bd.combinedScore), weight: '100%', available: true }
+    ]
+  }
+  return [
+    {
+      key: 'enemy',
+      label: 'Enemy matchup',
+      value: hasEnemy.value ? formatScore(bd.enemyMatchupScore) : 'Not available',
+      weight: hasEnemy.value ? signalWeight.value : '—',
+      available: hasEnemy.value
+    },
+    {
+      key: 'ally',
+      label: 'Ally synergy',
+      value: hasAlly.value ? formatScore(bd.allysSynergyScore) : 'Not available',
+      weight: hasAlly.value ? signalWeight.value : '—',
+      available: hasAlly.value
+    }
+  ]
+}
+
+/** Compact one-line breakdown for the ranked list rows. */
+function breakdownSummary(bd: BreakdownScores): string {
+  if (!hasEnemy.value && !hasAlly.value) return `Overall ${formatScore(bd.combinedScore)}`
+  const parts: string[] = []
+  if (hasEnemy.value) parts.push(`Enemy ${formatScore(bd.enemyMatchupScore)}`)
+  if (hasAlly.value) parts.push(`Ally ${formatScore(bd.allysSynergyScore)}`)
+  return parts.join(' · ')
+}
+
 function formatScore(score: number): string {
   return `${score.toFixed(1)}%`
-}
-function scoreBasisLabel(basis: string): string {
-  return basis === 'matchup' ? 'vs. revealed enemies' : 'overall win rate'
 }
 </script>
 
@@ -113,6 +171,14 @@ function scoreBasisLabel(basis: string): string {
             Auto-detect
           </v-btn>
           <v-spacer />
+          <div v-if="allyChampions.length" class="text-end">
+            <div class="text-caption text-medium-emphasis mb-1">Allies locked in</div>
+            <div class="d-flex ga-1 justify-end">
+              <v-avatar v-for="ally in allyChampions" :key="ally.id" size="32">
+                <v-img :src="ally.iconPath" />
+              </v-avatar>
+            </div>
+          </div>
           <div v-if="enemyChampions.length" class="text-end">
             <div class="text-caption text-medium-emphasis mb-1">Enemies revealed</div>
             <div class="d-flex ga-1 justify-end">
@@ -149,7 +215,7 @@ function scoreBasisLabel(basis: string): string {
           <v-avatar size="64" class="me-4">
             <v-img :src="topPick.iconPath" :alt="topPick.championName" />
           </v-avatar>
-          <div>
+          <div class="flex-grow-1">
             <div class="text-overline">Best Pick</div>
             <div class="text-h5 font-weight-bold">
               {{ topPick.championName }}
@@ -158,7 +224,30 @@ function scoreBasisLabel(basis: string): string {
               </v-chip>
             </div>
             <div class="text-body-2 text-medium-emphasis">
-              {{ formatScore(topPick.score) }} · {{ scoreBasisLabel(topPick.scoreBasis) }}
+              {{ formatScore(topPick.score) }} combined score
+            </div>
+
+            <!-- FR-009 / US3: score breakdown — enemy-matchup and ally-synergy shown
+                 separately, with weight; an inactive signal reads "Not available". -->
+            <div class="d-flex ga-6 flex-wrap mt-3">
+              <div v-for="block in breakdownBlocks(topPick.scoreBreakdown)" :key="block.key">
+                <div class="text-caption text-medium-emphasis d-flex align-center ga-1">
+                  {{ block.label }}
+                  <v-chip
+                    size="x-small"
+                    :color="block.available ? 'primary' : undefined"
+                    variant="tonal"
+                  >
+                    {{ block.weight }}
+                  </v-chip>
+                </div>
+                <div
+                  class="text-body-1"
+                  :class="block.available ? 'font-weight-medium' : 'text-disabled font-italic'"
+                >
+                  {{ block.value }}
+                </div>
+              </div>
             </div>
           </div>
         </v-card-text>
@@ -178,7 +267,7 @@ function scoreBasisLabel(basis: string): string {
               inactive
             </v-chip>
           </v-list-item-title>
-          <v-list-item-subtitle>{{ scoreBasisLabel(entry.scoreBasis) }}</v-list-item-subtitle>
+          <v-list-item-subtitle>{{ breakdownSummary(entry.scoreBreakdown) }}</v-list-item-subtitle>
           <template #append>
             <span class="text-body-1 font-weight-medium">{{ formatScore(entry.score) }}</span>
           </template>

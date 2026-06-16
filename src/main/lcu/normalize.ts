@@ -46,12 +46,24 @@ export function normalizeChampSelectSession(raw: RawLcuSession, now: string): Ch
     .filter((m) => typeof m.championId === 'number' && m.championId > 0)
     .map((m) => m.championId)
 
+  // Locked-in ally picks, excluding the local player (we recommend for them). A
+  // hovering (not locked) ally has championId 0 and is excluded (research.md §1).
+  const allyChampionIds = (raw.myTeam ?? [])
+    .filter(
+      (m) =>
+        m.cellId !== localPlayerCellId &&
+        typeof m.championId === 'number' &&
+        m.championId > 0
+    )
+    .map((m) => m.championId)
+
   return {
     active: true,
     phase: mapPhase(raw.timer?.phase),
     assignedRole,
     localPlayerCellId,
     enemyChampionIds,
+    allyChampionIds,
     updatedAt: now
   }
 }
@@ -64,6 +76,7 @@ export function inactiveSession(now: string): ChampSelectSession {
     assignedRole: null,
     localPlayerCellId: null,
     enemyChampionIds: [],
+    allyChampionIds: [],
     updatedAt: now
   }
 }

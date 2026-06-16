@@ -46,6 +46,28 @@ describe('LCU normalization (contract)', () => {
     expect(session.enemyChampionIds).toEqual([266, 103, 238])
   })
 
+  it('extracts locked-in ally picks from myTeam, excluding the local player and hovers (spec 002)', () => {
+    const raw: RawLcuSession = {
+      localPlayerCellId: 0,
+      timer: { phase: 'BAN_PICK' },
+      myTeam: [
+        { cellId: 0, championId: 0, assignedPosition: 'middle' }, // local player (excluded)
+        { cellId: 1, championId: 21 }, // locked ally MissFortune
+        { cellId: 2, championId: 412 }, // locked ally Thresh
+        { cellId: 3, championId: 0 } // ally still hovering / not locked (excluded)
+      ],
+      theirTeam: []
+    }
+    const session = normalizeChampSelectSession(raw, NOW)
+    expect(session.allyChampionIds).toEqual([21, 412])
+    expect(session.enemyChampionIds).toEqual([])
+  })
+
+  it('no allies locked in → empty allyChampionIds', () => {
+    const session = normalizeChampSelectSession(rawSession({ enemyChampionIds: [266] }), NOW)
+    expect(session.allyChampionIds).toEqual([])
+  })
+
   it('assignedPosition "utility" maps to SUPPORT', () => {
     const session = normalizeChampSelectSession(rawSession({ assignedPosition: 'utility' }), NOW)
     expect(session.assignedRole).toBe('SUPPORT')
