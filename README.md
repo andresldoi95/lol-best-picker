@@ -61,9 +61,14 @@ recommendation can be shown offline — SC-006), and attempts an LCU connection
 
 ## Configuration
 
-- `LBP_UGG_ENDPOINT` — u.gg stats data-feed URL. u.gg has no documented public API and
-  its feed paths change per patch, so this must be supplied/verified against the live feed
-  (research.md §1). Without it the app runs offline-first on bundled/cached stats.
+Live champion/matchup stats are scraped from **lolalytics** (`src/main/stats/lolalytics*`)
+and need no configuration. When a fetch fails the app runs offline-first on bundled/cached
+stats with a visible freshness indicator. The optional env vars below only tune LCU (League
+Client) discovery:
+
+- `LBP_LCU_LOCKFILE` — absolute path to the League Client `lockfile`, for a non-standard
+  install. Default install locations (`C:\Riot Games\League of Legends`, Program Files
+  variants) are auto-detected, so this is rarely needed.
 - `LBP_LCU_INSECURE=1` — dev-only: skip LCU TLS verification when Riot's `riotgames.pem`
   isn't bundled. Production should bundle the certificate at `src/main/lcu/riotgames.pem`.
 
