@@ -9,18 +9,24 @@ import type {
  * lolalytics-backed `SynergyProvider`.
  *
  * Reuses the exact Qwik-JSON decode technique as `LolalyticsStatsProvider`
- * (Principle VII), but reads per-champion **build pages** instead of tier-list
- * pages. A build page embeds a champion-id → {win-rate, games} map for the
- * champion's ally synergies; we resolve those ids to Data Dragon slugs and emit
- * one `NormalizedSynergyRow` per ally.
+ * (Principle VII), reading per-champion **build pages** instead of tier-list
+ * pages.
  *
- * IMPORTANT (research.md §2 / tasks.md T012): the field name for the games count
- * on champion build pages may be `n` rather than `games`, and a build page can
- * contain more than one champion-id-keyed stat map (e.g. counters vs synergy).
- * `parseSynergyHtml` is therefore tolerant of both field names and selects the
- * densest champion-id-keyed stat map; the exact map MUST be confirmed against a
- * live payload dump before relying on the data. On any miss the provider returns
- * an empty set for that target and the engine falls back to overall WR (research §3).
+ * IMPORTANT — verified against a live payload (Ahri/middle, see research.md §2 /
+ * tasks.md T012): a build page's server-rendered Qwik payload carries the
+ * champion's **counter** matchups (under an `enemy` key, grouped per lane as
+ * arrays of `[id, wr, d1, d2, pr, n]` tuples — the `enemy_h` header confirms that
+ * order) but does NOT embed ally-synergy data. The on-page "Synergy" table is
+ * lazy-loaded client-side from the internal (obfuscated, ToS-restricted) API the
+ * project deliberately avoids.
+ *
+ * `parseSynergyHtml` therefore targets a synergy-labelled section *by name*
+ * (never the sibling `enemy`/counter data, so counter win-rates can never be
+ * mislabelled as synergy) and parses the verified tuple shape when one is
+ * present. On current pages no such section exists, so it returns an empty set
+ * and the engine falls back to the champion's overall win rate for the ally
+ * component (research §3). If lolalytics ever server-renders synergy in the same
+ * tuple shape as `enemy`, this picks it up with no further change.
  *
  * Like the stats provider this is best-effort/fragile and intended for personal
  * use only; a failed fetch downgrades freshness and the app keeps serving cached
@@ -53,29 +59,73 @@ export interface LolalyticsMatchupProviderOptions {
   fetchImpl?: typeof fetch
 }
 
-/** A stat-shaped object on a build page: has a win rate and a games count.
- *  The games field may be `games` (tier-list naming) or `n` (build-page naming). */
-function gamesCountField(o: Record<string, unknown>): 'games' | 'n' | null {
-  if ('games' in o) return 'games'
-  if ('n' in o) return 'n'
-  return null
+/**
+ * Keys under which lolalytics groups *ally-synergy* matchup data on a build page.
+ * Deliberately excludes `enemy` (counters): targeting synergy by label is what
+ * guarantees counter win-rates can never be emitted as synergy. Matched as a
+ * whole word so `enemy`, and incidental keys like `width`, never qualify.
+ */
+const SYNERGY_KEY = /^(synergy|team|teammate|teammates|ally|allies|duo|with)$/i
+
+/** A decoded matchup tuple: champion id, win rate (%) and games sample size. */
+interface MatchupTuple {
+  id: number
+  wr: number
+  games: number
 }
 
-function isSynergyStatObject(o: unknown): o is Record<string, unknown> {
-  return (
-    typeof o === 'object' &&
-    o !== null &&
-    !Array.isArray(o) &&
-    'wr' in (o as Record<string, unknown>) &&
-    gamesCountField(o as Record<string, unknown>) !== null
-  )
+/**
+ * Decode one lolalytics matchup tuple. The live `enemy_h` header pins the column
+ * order as `[id, wr, d1, d2, pr, n]` (research.md §2): champion id first, win rate
+ * second, games (`n`) last. Returns null for anything that isn't a champion tuple
+ * (id outside 1..999 rules out item ids ≥ 1000; wr outside (0,100] rules out the
+ * delta/pick-rate columns), so a stray array can never become a synergy row.
+ */
+function matchupTuple(arr: unknown, resolve: (t: unknown) => unknown): MatchupTuple | null {
+  if (!Array.isArray(arr) || arr.length < 2) return null
+  const id = Number(resolve(arr[0]))
+  const wr = Number(resolve(arr[1]))
+  const games = Number(resolve(arr[arr.length - 1]))
+  if (!Number.isInteger(id) || id <= 0 || id >= 1000) return null
+  if (!Number.isFinite(wr) || wr <= 0 || wr > 100) return null
+  return { id, wr, games }
+}
+
+/**
+ * Collect matchup tuples reachable at depth ≤ 1 from a synergy-labelled value:
+ * either a flat array of tuples, or a lane-keyed object (`{top, jungle, …}`) of
+ * tuple arrays — mirroring the verified `enemy` shape.
+ */
+function collectTuples(
+  value: unknown,
+  resolve: (t: unknown) => unknown,
+  out: MatchupTuple[]
+): void {
+  const pushFrom = (arr: unknown): void => {
+    if (!Array.isArray(arr)) return
+    for (const el of arr) {
+      const t = matchupTuple(resolve(el), resolve)
+      if (t) out.push(t)
+    }
+  }
+  if (Array.isArray(value)) {
+    pushFrom(value)
+  } else if (value && typeof value === 'object') {
+    for (const v of Object.values(value as Record<string, unknown>)) pushFrom(resolve(v))
+  }
 }
 
 /**
  * Pure decode of one lolalytics build page → ally synergy rows for `championKey`
  * in `role`. Exported so the Qwik-payload parsing is unit-testable without a
- * network call. Returns `[]` (never throws) when no synergy map can be located —
- * the caller treats that as "no data" and applies the overall-WR fallback.
+ * network call.
+ *
+ * Locates the synergy section *by label* (`SYNERGY_KEY`), explicitly never the
+ * sibling `enemy` (counter) data, then reads the verified matchup-tuple shape.
+ * Returns `[]` (never throws) when no synergy section is present — the caller
+ * treats that as "no data" and applies the overall-WR fallback. NOTE: live build
+ * pages do not currently embed synergy (research.md §2), so this returns `[]` in
+ * practice today.
  */
 export function parseSynergyHtml(
   html: string,
@@ -104,55 +154,38 @@ export function parseSynergyHtml(
     return i >= 0 && i < objs.length ? objs[i] : t
   }
 
-  // Index every synergy-stat-shaped object, then find the champion-id → stat map:
-  // the object whose keys are numeric champion ids and whose values reference those
-  // stat objects. We pick the densest such map (most stat references).
-  const statIndices = new Set<number>()
-  objs.forEach((o, i) => {
-    if (isSynergyStatObject(o)) statIndices.add(i)
-  })
-  if (statIndices.size === 0) return []
-
-  const minContainerHits = Math.max(3, Math.floor(statIndices.size / 2))
-  let container: Record<string, unknown> | null = null
-  let bestHits = 0
+  // Gather every synergy-labelled section's tuples. Because we only ever traverse
+  // values reached through a SYNERGY_KEY, the `enemy`/counter map (and the item
+  // build stats) are structurally unreachable here and can never leak in.
+  const tuples: MatchupTuple[] = []
   for (const o of objs) {
-    if (typeof o !== 'object' || o === null || Array.isArray(o)) continue
-    const entries = Object.entries(o as Record<string, unknown>)
-    // A synergy map is keyed by numeric champion ids that resolve to stat objects.
-    const hits = entries.filter(
-      ([k, v]) => /^\d+$/.test(k) && statIndices.has(toIndex(v))
-    ).length
-    if (hits > bestHits) {
-      bestHits = hits
-      container = o as Record<string, unknown>
+    if (!o || typeof o !== 'object' || Array.isArray(o)) continue
+    for (const [key, val] of Object.entries(o as Record<string, unknown>)) {
+      if (SYNERGY_KEY.test(key)) collectTuples(resolve(val), resolve, tuples)
     }
   }
-  if (!container || bestHits < minContainerHits) return []
+  if (tuples.length === 0) return []
+
+  // Resolve ids → slugs, drop self/unknown/low-sample, and keep the highest-sample
+  // row per ally (an ally could appear in more than one lane section).
+  const best = new Map<string, { wr: number; games: number }>()
+  for (const t of tuples) {
+    const allyChampionKey = idToKey.get(t.id)
+    if (!allyChampionKey || allyChampionKey === championKey) continue
+    if (Number.isFinite(t.games) && t.games < minGames) continue
+    const games = Number.isFinite(t.games) ? t.games : 0
+    const prev = best.get(allyChampionKey)
+    if (!prev || games > prev.games) best.set(allyChampionKey, { wr: t.wr, games })
+  }
 
   const rows: NormalizedSynergyRow[] = []
-  for (const [cidStr, ref] of Object.entries(container)) {
-    if (!/^\d+$/.test(cidStr)) continue
-    const allyChampionId = Number(cidStr)
-    const allyChampionKey = idToKey.get(allyChampionId)
-    if (!allyChampionKey || allyChampionKey === championKey) continue // skip self / unknown
-
-    const stat = resolve(ref)
-    if (!isSynergyStatObject(stat)) continue
-    const gamesField = gamesCountField(stat)
-    if (!gamesField) continue
-
-    const winRate = Number(resolve(stat.wr))
-    const gamesPlayed = Number(resolve(stat[gamesField]))
-    if (!Number.isFinite(winRate) || winRate <= 0) continue
-    if (Number.isFinite(gamesPlayed) && gamesPlayed < minGames) continue
-
+  for (const [allyChampionKey, s] of best) {
     rows.push({
       championKey,
       role,
       allyChampionKey,
-      winRate: Math.max(0, Math.min(100, winRate)),
-      gamesPlayed: Number.isFinite(gamesPlayed) ? Math.floor(gamesPlayed) : 0,
+      winRate: Math.max(0, Math.min(100, s.wr)),
+      gamesPlayed: Math.floor(s.games),
       patch
     })
   }

@@ -40,25 +40,52 @@ we're recommending for them).
 
 **Decision**: Fetch ally synergy win-rate data from **lolalytics per-champion build
 pages** at `https://lolalytics.com/lol/{champion-slug}/build/?lane={role}&tier={tier}`.
-These pages embed a Qwik JSON payload (same mechanism as the existing tier-list pages)
-that contains a "synergy" section with per-ally win rates.
+These pages embed a Qwik JSON payload (same mechanism as the existing tier-list pages).
+
+> **⚠️ VERIFIED 2026-06-17 — the synergy data is NOT in the build-page payload.**
+> A live dump of `https://lolalytics.com/lol/ahri/build/?lane=middle&tier=emerald`
+> (623 KB page, 343 KB Qwik payload, 12,211 `objs`) shows the page server-renders the
+> champion's **counter** matchups but **not** ally synergy. The on-page "Synergy" table
+> renders as empty sortable headers and is lazy-loaded client-side from the internal
+> `https://a1.lolalytics.com/mega/` API — the obfuscated, ToS-restricted feed this
+> project deliberately avoids (see `LolalyticsStatsProvider` doc / Principle VII).
+> Probing that API returns PHP `print_r`, not JSON, and rejects `ep=champion` as
+> "invalid end point". **Conclusion: ally synergy is not obtainable via compliant
+> page-scraping.** The provider keeps scraping the page, finds no synergy section, and
+> returns `[]`; the engine falls back to overall WR for the ally component (§3). See the
+> chosen disposition below and `parseSynergyHtml` / `tests/unit/stats/lolalyticsMatchupProvider.test.ts`.
 
 **URL pattern**: `https://lolalytics.com/lol/{slug}/build/?lane={lane}&tier=emerald`
 where `{slug}` is the lowercase champion key (e.g. `ahri`, `missfortune`) and `{lane}`
 is one of `top | jungle | middle | bottom | support`.
 
-**Payload structure (implementation-time discovery)**: The exact field names in the Qwik
-`objs` array for the synergy section are NOT identical to the tier-list fields (`wr`,
-`games`, `pr`). The implementation MUST:
+**Verified payload structure (2026-06-17 live dump)**: The matchup data is NOT an
+id-keyed map of `{wr, games}` objects (as originally assumed). It is held on a data object
+keyed by `enemy` (counters only) → a lane-keyed object `{top, jungle, middle, bottom,
+support}` → **arrays of 6-element number tuples**. The `enemy_h` header pins the column
+order:
 
-1. Fetch the page HTML.
-2. Locate `<script type="qwik/json">` (same as `parseTierlistHtml`).
-3. Walk the `objs` array to find the synergy map — the object whose keys are champion IDs
-   and whose values resolve to objects containing `wr` (win rate) and a game count field.
-   The game count field on champion pages may use `n` rather than `games` — confirm at
-   implementation time with a live page fetch and log the payload structure.
-4. Emit `NormalizedSynergyRow[]` with `championKey`, `role`, `allyChampionKey`,
-   `winRate`, `gamesPlayed`, `patch`.
+```
+enemy_h = ["id", "wr", "d1", "d2", "pr", "n"]
+enemy.middle[0] = [517, 49.08, 0.73, -2.49, 6.03, 4582]   // Sylas: wr 49.08%, n=4582 games
+```
+
+So a champion matchup tuple is `[championId, winRate, delta1, delta2, pickRate, games]` —
+champion id first, win rate second, games (`n`) last. The only `{id, n, wr}` *objects* on
+the page are **item builds** (ids ≥ 1000, e.g. 3089 = Rabadon's), not champions. There is
+**no** `team`/`synergy`/`ally`/`with` key anywhere in `objs`.
+
+**Chosen disposition (page-scraping retained, Principle VII)**: `parseSynergyHtml`:
+
+1. Fetches the page HTML and locates `<script type="qwik/json">` (same as `parseTierlistHtml`).
+2. Targets a synergy section **by label** — a key matching `synergy|team|ally|allies|duo|with`,
+   never `enemy`. This is what guarantees counter win-rates can never be emitted as synergy
+   (the original "densest id-keyed stat map" heuristic had no such guard).
+3. Parses the verified tuple shape (`id` at [0], `wr` at [1], games at the last index) into
+   `NormalizedSynergyRow[]` (`championKey`, `role`, `allyChampionKey`, `winRate`,
+   `gamesPlayed`, `patch`), dropping self / unknown / sub-`minGames` / zero-WR rows.
+4. Finds no synergy section on today's pages → returns `[]`. If lolalytics ever
+   server-renders synergy in the same tuple shape as `enemy`, this picks it up unchanged.
 
 **Scale**: Synergy fetches are pool-scoped, not all-champions-scoped. With a pool of
 e.g. 10 champion-role pairs, the refresh makes 10 HTTPS requests — lightweight compared
@@ -77,9 +104,12 @@ champion's overall win rate for the ally synergy component (FR-011 analogue for 
 - *u.gg synergy data*: The `uggStatsProvider` already exists but u.gg's synergy data
   feeds are not documented and may differ. The `SynergyProvider` interface is
   data-source-agnostic; a `UggMatchupProvider` can be added later if lolalytics fails.
-- *Skip synergy and use only overall WR for ally component*: Would satisfy FR-007/FR-008
-  (ally-only fallback) but defeat the purpose of the feature — ally synergy data exists
-  on lolalytics and should be used.
+- *Skip synergy and use only overall WR for ally component*: Satisfies FR-007/FR-008
+  (ally-only fallback). Given the 2026-06-17 finding that synergy is not available via
+  compliant page-scraping, this is the **current de-facto behaviour**: `parseSynergyHtml`
+  returns `[]` and the engine uses overall WR for the ally component. A real synergy feed
+  (e.g. a `UggMatchupProvider`, or accepting the internal lolalytics API) can be slotted in
+  later behind the unchanged `SynergyProvider` interface without touching the engine.
 
 ---
 
@@ -194,9 +224,9 @@ the existing freshness/caching path, and `ScoreBasis` is extended to include
 | Item | Resolution |
 |---|---|
 | Ally champion IDs | `myTeam[]` already in LCU session; exclude `localPlayerCellId` and `championId === 0` |
-| Synergy data source | Lolalytics per-champion build pages (same Qwik JSON technique as existing provider) |
+| Synergy data source | Lolalytics build pages — **verified 2026-06-17: pages embed counters (`enemy`) only, NOT synergy**; synergy is lazy-loaded from the avoided internal API. Provider returns `[]` → overall-WR fallback |
 | Synergy URL pattern | `https://lolalytics.com/lol/{slug}/build/?lane={lane}&tier=emerald` |
-| Synergy field names | Verify at implementation time — likely `wr` + `n` (not `games`) in synergy section |
+| Synergy field names | Matchup tuples `[id, wr, d1, d2, pr, n]` (`enemy_h` header), not `{wr, games}` objects; `n` = games. `{id,n,wr}` objects on the page are *items*, not champions |
 | Combined score | 50/50 enemy matchup + ally synergy; fall back to available signal when one is absent |
 | Ally signal fallback | Per missing pair: use overall WR; average across all allies with available data |
 | Migration | `002_add_synergy.sql` — new `champion_synergy` table + ALTER snapshot |
