@@ -22,7 +22,8 @@ export const IPC = {
   // Settings (US2/US3)
   SETTINGS_GET: 'settings:get',
   SETTINGS_SET_MANUAL_ROLE: 'settings:setManualRole',
-  SETTINGS_SET_STATS_FRESHNESS_HOURS: 'settings:setStatsFreshnessHours'
+  SETTINGS_SET_STATS_FRESHNESS_HOURS: 'settings:setStatsFreshnessHours',
+  SETTINGS_SET_LANGUAGE: 'settings:setLanguage'
 } as const
 
 export type IpcChannel = (typeof IPC)[keyof typeof IPC]
@@ -38,7 +39,8 @@ export const INVOKE_CHANNELS: readonly IpcChannel[] = [
   IPC.CHAMP_SELECT_GET_STATUS,
   IPC.SETTINGS_GET,
   IPC.SETTINGS_SET_MANUAL_ROLE,
-  IPC.SETTINGS_SET_STATS_FRESHNESS_HOURS
+  IPC.SETTINGS_SET_STATS_FRESHNESS_HOURS,
+  IPC.SETTINGS_SET_LANGUAGE
 ]
 
 /** Push-event channels the renderer may subscribe to (main → renderer). */

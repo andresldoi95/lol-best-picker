@@ -72,7 +72,7 @@ failures downgrade freshness and fall back to bundled seed data; they never thro
 
 ## Active Feature Plan
 
-**Feature**: Composition-Aware Recommendations
-**Branch**: `002-team-composition-recs`
-**Plan**: [specs/002-team-composition-recs/plan.md](specs/002-team-composition-recs/plan.md)
-**Spec**: [specs/002-team-composition-recs/spec.md](specs/002-team-composition-recs/spec.md)
+**Feature**: Multi-Language Support
+**Branch**: `003-multi-language-support`
+**Plan**: [specs/003-multi-language-support/plan.md](specs/003-multi-language-support/plan.md)
+**Spec**: [specs/003-multi-language-support/spec.md](specs/003-multi-language-support/spec.md)

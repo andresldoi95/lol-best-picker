@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
 import { IPC, INVOKE_CHANNELS, EVENT_CHANNELS, type IpcChannel } from '@shared/ipcChannels'
-import type { Recommendation, ChampSelectSession, Role } from '@shared/types'
+import type { Recommendation, ChampSelectSession, Role, Language } from '@shared/types'
 
 /** Whitelisted request/response invoke — rejects any non-allowlisted channel. */
 function invoke<T>(channel: IpcChannel, ...args: unknown[]): Promise<T> {
@@ -46,7 +46,8 @@ const api = {
     get: () => invoke(IPC.SETTINGS_GET),
     setManualRole: (role: Role | null) => invoke<void>(IPC.SETTINGS_SET_MANUAL_ROLE, role),
     setStatsFreshnessHours: (hours: number) =>
-      invoke<void>(IPC.SETTINGS_SET_STATS_FRESHNESS_HOURS, hours)
+      invoke<void>(IPC.SETTINGS_SET_STATS_FRESHNESS_HOURS, hours),
+    setLanguage: (language: Language) => invoke<void>(IPC.SETTINGS_SET_LANGUAGE, language)
   }
 }
 

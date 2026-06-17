@@ -1,16 +1,36 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import { ROLES, type Role } from '@shared/types'
+import { ROLES, type Language, type Role } from '@shared/types'
 import { useSettings } from '@renderer/composables/useSettings'
+import { useLocale } from '@renderer/i18n/useLocale'
+import type { Catalog } from '@renderer/i18n/types'
 
-const { settings, load, setManualRole, setStatsFreshnessHours } = useSettings()
+const { settings, load, setManualRole, setStatsFreshnessHours, setLanguage } = useSettings()
+const { t, d, setLocale } = useLocale()
 
-const roleLabels: Record<Role, string> = {
-  TOP: 'Top',
-  JUNGLE: 'Jungle',
-  MIDDLE: 'Middle',
-  BOTTOM: 'Bottom',
-  SUPPORT: 'Support'
+const roleLabelKeys: Record<Role, keyof Catalog> = {
+  TOP: 'roleTop',
+  JUNGLE: 'roleJungle',
+  MIDDLE: 'roleMiddle',
+  BOTTOM: 'roleBottom',
+  SUPPORT: 'roleSupport'
+}
+const roleLabel = (role: Role): string => t(roleLabelKeys[role])
+
+// Language endonyms are intentionally not translated (each shown in its own language).
+const languageOptions: { value: Language; title: string }[] = [
+  { value: 'en', title: 'English' },
+  { value: 'es', title: 'Español' }
+]
+
+const languageModel = computed<Language>({
+  get: () => settings.value?.language ?? 'en',
+  set: (lang) => void applyLanguage(lang)
+})
+
+async function applyLanguage(lang: Language): Promise<void> {
+  await setLanguage(lang)
+  setLocale(lang)
 }
 
 onMounted(() => {
@@ -37,23 +57,46 @@ async function saveFreshnessHours(): Promise<void> {
   await setStatsFreshnessHours(hours)
 }
 
+const statusLabelKeys: Record<'success' | 'error', keyof Catalog> = {
+  success: 'settingsStatusSuccess',
+  error: 'settingsStatusError'
+}
+
 const lastFetchText = computed(() => {
   const at = settings.value?.lastStatsFetchAt
   const status = settings.value?.lastStatsFetchStatus
-  if (!at) return 'No live stats fetch has succeeded yet — using bundled/cached data.'
-  return `Last fetch ${status ?? 'unknown'} at ${new Date(at).toLocaleString()}.`
+  if (!at) return t('settingsLastFetchNever')
+  const statusLabel = status ? t(statusLabelKeys[status]) : t('settingsStatusUnknown')
+  return t('settingsLastFetchAt').replace('{status}', statusLabel).replace('{time}', d(at))
 })
 </script>
 
 <template>
   <div>
-    <h1 class="text-h4 mb-6">Settings</h1>
+    <h1 class="text-h4 mb-6">{{ t('settingsTitle') }}</h1>
 
     <v-card border flat class="mb-6">
-      <v-card-title>Role Override</v-card-title>
-      <v-card-subtitle>
-        Force recommendations to a specific role when auto-detection isn't available (FR-007).
-      </v-card-subtitle>
+      <v-card-title>{{ t('settingsLanguageTitle') }}</v-card-title>
+      <v-card-subtitle>{{ t('settingsLanguageSubtitle') }}</v-card-subtitle>
+      <v-card-text>
+        <v-btn-toggle
+          :model-value="languageModel"
+          color="primary"
+          variant="outlined"
+          divided
+          mandatory
+          @update:model-value="languageModel = $event"
+        >
+          <v-btn v-for="option in languageOptions" :key="option.value" :value="option.value">
+            {{ option.title }}
+          </v-btn>
+        </v-btn-toggle>
+      </v-card-text>
+    </v-card>
+
+    <v-card border flat class="mb-6">
+      <v-card-title>{{ t('settingsRoleOverrideTitle') }}</v-card-title>
+      <v-card-subtitle>{{ t('settingsRoleOverrideSubtitle') }}</v-card-subtitle>
       <v-card-text>
         <v-btn-toggle
           :model-value="manualRole"
@@ -63,7 +106,7 @@ const lastFetchText = computed(() => {
           @update:model-value="manualRole = $event"
         >
           <v-btn v-for="role in ROLES" :key="role" :value="role">
-            {{ roleLabels[role] }}
+            {{ roleLabel(role) }}
           </v-btn>
         </v-btn-toggle>
         <div class="mt-3">
@@ -74,24 +117,22 @@ const lastFetchText = computed(() => {
             prepend-icon="mdi-backup-restore"
             @click="manualRole = null"
           >
-            Clear (auto-detect role)
+            {{ t('settingsClearAutoDetect') }}
           </v-btn>
         </div>
       </v-card-text>
     </v-card>
 
     <v-card border flat>
-      <v-card-title>Statistics Freshness</v-card-title>
-      <v-card-subtitle>
-        How long cached stats stay "live" before they're marked stale (research.md §5).
-      </v-card-subtitle>
+      <v-card-title>{{ t('settingsFreshnessTitle') }}</v-card-title>
+      <v-card-subtitle>{{ t('settingsFreshnessSubtitle') }}</v-card-subtitle>
       <v-card-text>
         <v-row align="center" dense>
           <v-col cols="12" sm="6" md="4">
             <v-text-field
               v-model.number="freshnessHours"
               type="number"
-              label="Freshness threshold (hours)"
+              :label="t('settingsFreshnessFieldLabel')"
               variant="outlined"
               density="comfortable"
               :min="1"
@@ -101,7 +142,7 @@ const lastFetchText = computed(() => {
           </v-col>
           <v-col cols="12" sm="6" md="4">
             <v-btn color="primary" prepend-icon="mdi-content-save" @click="saveFreshnessHours">
-              Save
+              {{ t('settingsSaveButton') }}
             </v-btn>
           </v-col>
         </v-row>
