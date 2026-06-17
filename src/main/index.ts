@@ -36,7 +36,17 @@ function initDatabase(): DB {
   const database = createDatabase(dbPath)
   seedChampions(database) // T009 — Data Dragon champion metadata
   seedChampionStats(database) // T010 — baseline win-rate stats (SC-006 offline-first)
+  initLanguageFromOsLocale(database) // spec 003 US3 — first-launch default
   return database
+}
+
+/** First launch only: seed the interface language from the OS display locale
+ *  (spec 003 US3). `app.getLocale()` returns e.g. "es-ES"/"es-MX"/"en-US"; we map
+ *  any "es*" to Spanish and everything else to English. `initLanguageIfUnset`'s
+ *  NULL guard means an explicit user choice is never overwritten on later launches. */
+function initLanguageFromOsLocale(database: DB): void {
+  const detected: 'en' | 'es' = app.getLocale().toLowerCase().startsWith('es') ? 'es' : 'en'
+  new SettingsRepository(database).initLanguageIfUnset(detected)
 }
 
 function broadcast(channel: string, payload: unknown): void {

@@ -5,20 +5,24 @@ import { useRecommendation } from '@renderer/composables/useRecommendation'
 import { useChampSelect } from '@renderer/composables/useChampSelect'
 import { useSettings } from '@renderer/composables/useSettings'
 import { usePool } from '@renderer/composables/usePool'
+import { useLocale } from '@renderer/i18n/useLocale'
+import type { Catalog } from '@renderer/i18n/types'
 import FreshnessIndicator from '@renderer/components/FreshnessIndicator.vue'
 
 const { recommendation, loading, load: loadRecommendation } = useRecommendation()
 const { session, load: loadSession } = useChampSelect()
 const { settings, load: loadSettings, setManualRole } = useSettings()
 const { champions, loaded: championsLoaded, refresh: refreshPool } = usePool()
+const { t, n } = useLocale()
 
-const roleLabels: Record<Role, string> = {
-  TOP: 'Top',
-  JUNGLE: 'Jungle',
-  MIDDLE: 'Middle',
-  BOTTOM: 'Bottom',
-  SUPPORT: 'Support'
+const roleLabelKeys: Record<Role, keyof Catalog> = {
+  TOP: 'roleTop',
+  JUNGLE: 'roleJungle',
+  MIDDLE: 'roleMiddle',
+  BOTTOM: 'roleBottom',
+  SUPPORT: 'roleSupport'
 }
+const roleLabel = (role: Role): string => t(roleLabelKeys[role])
 
 onMounted(async () => {
   if (!championsLoaded.value) await refreshPool()
@@ -86,21 +90,21 @@ type BreakdownScores = Pick<ScoreBreakdown, 'enemyMatchupScore' | 'allysSynergyS
 function breakdownBlocks(bd: BreakdownScores): SignalBlock[] {
   if (!hasEnemy.value && !hasAlly.value) {
     return [
-      { key: 'overall', label: 'Overall win rate', value: formatScore(bd.combinedScore), weight: '100%', available: true }
+      { key: 'overall', label: t('champSelectOverallWinRate'), value: formatScore(bd.combinedScore), weight: '100%', available: true }
     ]
   }
   return [
     {
       key: 'enemy',
-      label: 'Enemy matchup',
-      value: hasEnemy.value ? formatScore(bd.enemyMatchupScore) : 'Not available',
+      label: t('champSelectEnemyMatchup'),
+      value: hasEnemy.value ? formatScore(bd.enemyMatchupScore) : t('champSelectNotAvailable'),
       weight: hasEnemy.value ? signalWeight.value : '—',
       available: hasEnemy.value
     },
     {
       key: 'ally',
-      label: 'Ally synergy',
-      value: hasAlly.value ? formatScore(bd.allysSynergyScore) : 'Not available',
+      label: t('champSelectAllySynergy'),
+      value: hasAlly.value ? formatScore(bd.allysSynergyScore) : t('champSelectNotAvailable'),
       weight: hasAlly.value ? signalWeight.value : '—',
       available: hasAlly.value
     }
@@ -109,27 +113,29 @@ function breakdownBlocks(bd: BreakdownScores): SignalBlock[] {
 
 /** Compact one-line breakdown for the ranked list rows. */
 function breakdownSummary(bd: BreakdownScores): string {
-  if (!hasEnemy.value && !hasAlly.value) return `Overall ${formatScore(bd.combinedScore)}`
+  if (!hasEnemy.value && !hasAlly.value) {
+    return `${t('champSelectSummaryOverall')} ${formatScore(bd.combinedScore)}`
+  }
   const parts: string[] = []
-  if (hasEnemy.value) parts.push(`Enemy ${formatScore(bd.enemyMatchupScore)}`)
-  if (hasAlly.value) parts.push(`Ally ${formatScore(bd.allysSynergyScore)}`)
+  if (hasEnemy.value) parts.push(`${t('champSelectSummaryEnemy')} ${formatScore(bd.enemyMatchupScore)}`)
+  if (hasAlly.value) parts.push(`${t('champSelectSummaryAlly')} ${formatScore(bd.allysSynergyScore)}`)
   return parts.join(' · ')
 }
 
 function formatScore(score: number): string {
-  return `${score.toFixed(1)}%`
+  return `${n(score, 'decimal1')}%`
 }
 </script>
 
 <template>
   <div>
     <div class="d-flex align-center flex-wrap mb-1">
-      <h1 class="text-h4 me-4">Champion Select</h1>
+      <h1 class="text-h4 me-4">{{ t('champSelectTitle') }}</h1>
       <v-chip v-if="activeRole" color="primary" variant="flat" class="me-2">
-        {{ roleLabels[activeRole] }}
+        {{ roleLabel(activeRole) }}
       </v-chip>
       <v-chip v-if="session?.active" size="small" color="success" variant="tonal" class="me-2">
-        <v-icon start icon="mdi-circle" size="x-small" /> Live
+        <v-icon start icon="mdi-circle" size="x-small" /> {{ t('champSelectLiveChip') }}
       </v-chip>
       <v-spacer />
       <FreshnessIndicator
@@ -139,15 +145,13 @@ function formatScore(score: number): string {
       />
     </div>
 
-    <p class="text-medium-emphasis mb-6">
-      Best pick from <strong>your pool</strong> for the active role, ranked by win rate.
-    </p>
+    <p class="text-medium-emphasis mb-6">{{ t('champSelectSubtitle') }}</p>
 
     <v-card border flat class="mb-6">
       <v-card-text>
         <div class="d-flex align-center flex-wrap ga-4">
           <div>
-            <div class="text-caption text-medium-emphasis mb-1">Role (overrides auto-detection)</div>
+            <div class="text-caption text-medium-emphasis mb-1">{{ t('champSelectRoleOverrideLabel') }}</div>
             <v-btn-toggle
               :model-value="manualRoleModel"
               color="primary"
@@ -157,7 +161,7 @@ function formatScore(score: number): string {
               @update:model-value="manualRoleModel = $event"
             >
               <v-btn v-for="role in ROLES" :key="role" :value="role" size="small">
-                {{ roleLabels[role] }}
+                {{ roleLabel(role) }}
               </v-btn>
             </v-btn-toggle>
           </div>
@@ -168,11 +172,11 @@ function formatScore(score: number): string {
             prepend-icon="mdi-backup-restore"
             @click="applyManualRole(null)"
           >
-            Auto-detect
+            {{ t('champSelectAutoDetect') }}
           </v-btn>
           <v-spacer />
           <div v-if="allyChampions.length" class="text-end">
-            <div class="text-caption text-medium-emphasis mb-1">Allies locked in</div>
+            <div class="text-caption text-medium-emphasis mb-1">{{ t('champSelectAlliesLockedIn') }}</div>
             <div class="d-flex ga-1 justify-end">
               <v-avatar v-for="ally in allyChampions" :key="ally.id" size="32">
                 <v-img :src="ally.iconPath" />
@@ -180,7 +184,7 @@ function formatScore(score: number): string {
             </div>
           </div>
           <div v-if="enemyChampions.length" class="text-end">
-            <div class="text-caption text-medium-emphasis mb-1">Enemies revealed</div>
+            <div class="text-caption text-medium-emphasis mb-1">{{ t('champSelectEnemiesRevealed') }}</div>
             <div class="d-flex ga-1 justify-end">
               <v-avatar v-for="enemy in enemyChampions" :key="enemy.id" size="32">
                 <v-img :src="enemy.iconPath" />
@@ -195,7 +199,7 @@ function formatScore(score: number): string {
 
     <!-- FR-007: no role resolved → prompt for manual selection -->
     <v-alert v-if="activeRole === null" type="info" variant="tonal" class="mb-4">
-      Select your role above to see recommendations from your pool.
+      {{ t('champSelectRolePrompt') }}
     </v-alert>
 
     <!-- FR-013: empty role-filtered pool -->
@@ -205,8 +209,7 @@ function formatScore(score: number): string {
       variant="tonal"
       class="mb-4"
     >
-      No champions in your pool for {{ roleLabels[activeRole] }}. Add some on the
-      <strong>Pool</strong> tab.
+      {{ t('champSelectEmptyPool').replace('{role}', roleLabel(activeRole)) }}
     </v-alert>
 
     <template v-else>
@@ -216,15 +219,15 @@ function formatScore(score: number): string {
             <v-img :src="topPick.iconPath" :alt="topPick.championName" />
           </v-avatar>
           <div class="flex-grow-1">
-            <div class="text-overline">Best Pick</div>
+            <div class="text-overline">{{ t('champSelectBestPick') }}</div>
             <div class="text-h5 font-weight-bold">
               {{ topPick.championName }}
               <v-chip v-if="topPick.isFlagged" size="x-small" color="warning" variant="flat">
-                inactive
+                {{ t('champSelectInactiveChip') }}
               </v-chip>
             </div>
             <div class="text-body-2 text-medium-emphasis">
-              {{ formatScore(topPick.score) }} combined score
+              {{ t('champSelectCombinedScore').replace('{score}', formatScore(topPick.score)) }}
             </div>
 
             <!-- FR-009 / US3: score breakdown — enemy-matchup and ally-synergy shown
@@ -264,7 +267,7 @@ function formatScore(score: number): string {
           <v-list-item-title>
             {{ entry.championName }}
             <v-chip v-if="entry.isFlagged" size="x-small" color="warning" variant="flat" class="ms-1">
-              inactive
+              {{ t('champSelectInactiveChip') }}
             </v-chip>
           </v-list-item-title>
           <v-list-item-subtitle>{{ breakdownSummary(entry.scoreBreakdown) }}</v-list-item-subtitle>

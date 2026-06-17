@@ -1,5 +1,6 @@
 import initial001 from './001_initial.sql?raw'
 import addSynergy002 from './002_add_synergy.sql?raw'
+import addLanguage003 from './003_add_language.sql?raw'
 
 export interface Migration {
   /** Stable, sortable identifier — the migration filename without extension. */
@@ -11,5 +12,6 @@ export interface Migration {
  *  already-shipped ones (the app applies pending ones by `id` on startup). */
 export const migrations: Migration[] = [
   { id: '001_initial', sql: initial001 },
-  { id: '002_add_synergy', sql: addSynergy002 }
+  { id: '002_add_synergy', sql: addSynergy002 },
+  { id: '003_add_language', sql: addLanguage003 }
 ]

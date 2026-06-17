@@ -1,5 +1,5 @@
 import { ref, readonly } from 'vue'
-import type { AppSettings, Role } from '@shared/types'
+import type { AppSettings, Language, Role } from '@shared/types'
 
 // Shared reactive app settings (manual role, freshness threshold, fetch status).
 const settings = ref<AppSettings | null>(null)
@@ -18,11 +18,17 @@ async function setStatsFreshnessHours(hours: number): Promise<void> {
   await load()
 }
 
+async function setLanguage(lang: Language): Promise<void> {
+  await window.api.settings.setLanguage(lang)
+  await load()
+}
+
 export function useSettings() {
   return {
     settings: readonly(settings),
     load,
     setManualRole,
-    setStatsFreshnessHours
+    setStatsFreshnessHours,
+    setLanguage
   }
 }

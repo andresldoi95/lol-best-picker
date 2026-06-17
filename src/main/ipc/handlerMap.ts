@@ -1,5 +1,5 @@
 import { IPC } from '@shared/ipcChannels'
-import type { ChampSelectSession, Recommendation, Role } from '@shared/types'
+import type { ChampSelectSession, Language, Recommendation, Role } from '@shared/types'
 import type { PoolRepository } from '../db/repositories/poolRepository'
 import type { ChampionsRepository } from '../db/repositories/championsRepository'
 import type { SettingsRepository } from '../db/repositories/settingsRepository'
@@ -48,6 +48,9 @@ export function createHandlerMap(deps: IpcDependencies): IpcHandlerMap {
 
     // Settings (US3)
     [IPC.SETTINGS_SET_STATS_FRESHNESS_HOURS]: (hours: number) =>
-      deps.settings.setStatsFreshnessHours(hours)
+      deps.settings.setStatsFreshnessHours(hours),
+
+    // Settings — language (spec 003 US2)
+    [IPC.SETTINGS_SET_LANGUAGE]: (language: Language) => deps.settings.setLanguage(language)
   }
 }

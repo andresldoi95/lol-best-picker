@@ -2,20 +2,24 @@
 import { computed, onMounted, ref } from 'vue'
 import { ROLES, type Role } from '@shared/types'
 import { usePool } from '@renderer/composables/usePool'
+import { useLocale } from '@renderer/i18n/useLocale'
+import type { Catalog } from '@renderer/i18n/types'
 
 const { pool, champions, loaded, loading, refresh, addToPool, removeFromPool, removeAllRoles } =
   usePool()
+const { t } = useLocale()
 
 const selectedChampionId = ref<number | null>(null)
 const selectedRoles = ref<Role[]>([])
 
-const roleLabels: Record<Role, string> = {
-  TOP: 'Top',
-  JUNGLE: 'Jungle',
-  MIDDLE: 'Middle',
-  BOTTOM: 'Bottom',
-  SUPPORT: 'Support'
+const roleLabelKeys: Record<Role, keyof Catalog> = {
+  TOP: 'roleTop',
+  JUNGLE: 'roleJungle',
+  MIDDLE: 'roleMiddle',
+  BOTTOM: 'roleBottom',
+  SUPPORT: 'roleSupport'
 }
+const roleLabel = (role: Role): string => t(roleLabelKeys[role])
 const roleIcons: Record<Role, string> = {
   TOP: 'mdi-shield-sword',
   JUNGLE: 'mdi-pine-tree',
@@ -56,10 +60,8 @@ async function handleAdd(): Promise<void> {
 
 <template>
   <div>
-    <h1 class="text-h4 mb-1">Champion Pool</h1>
-    <p class="text-medium-emphasis mb-6">
-      Tag the champions you actually play by role. Recommendations are drawn only from this pool.
-    </p>
+    <h1 class="text-h4 mb-1">{{ t('poolTitle') }}</h1>
+    <p class="text-medium-emphasis mb-6">{{ t('poolSubtitle') }}</p>
 
     <v-card class="mb-8" border flat>
       <v-card-text>
@@ -68,8 +70,8 @@ async function handleAdd(): Promise<void> {
             <v-autocomplete
               v-model="selectedChampionId"
               :items="championItems"
-              label="Champion"
-              placeholder="Search a champion…"
+              :label="t('poolChampionLabel')"
+              :placeholder="t('poolChampionPlaceholder')"
               prepend-inner-icon="mdi-magnify"
               variant="outlined"
               density="comfortable"
@@ -87,7 +89,7 @@ async function handleAdd(): Promise<void> {
                 filter
                 variant="outlined"
               >
-                {{ roleLabels[role] }}
+                {{ roleLabel(role) }}
               </v-chip>
             </v-chip-group>
           </v-col>
@@ -99,7 +101,7 @@ async function handleAdd(): Promise<void> {
               block
               @click="handleAdd"
             >
-              Add
+              {{ t('poolAddButton') }}
             </v-btn>
           </v-col>
         </v-row>
@@ -113,7 +115,7 @@ async function handleAdd(): Promise<void> {
         <v-card border flat height="100%">
           <v-card-title class="d-flex align-center">
             <v-icon :icon="roleIcons[group.role]" class="me-2" />
-            {{ roleLabels[group.role] }}
+            {{ roleLabel(group.role) }}
             <v-spacer />
             <v-chip size="small" variant="tonal">{{ group.entries.length }}</v-chip>
           </v-card-title>
@@ -134,7 +136,7 @@ async function handleAdd(): Promise<void> {
                   variant="flat"
                   class="ms-2"
                 >
-                  inactive
+                  {{ t('poolInactiveChip') }}
                 </v-chip>
               </v-list-item-title>
               <template #append>
@@ -142,21 +144,25 @@ async function handleAdd(): Promise<void> {
                   icon="mdi-close"
                   size="x-small"
                   variant="text"
-                  :aria-label="`Remove ${entry.name} from ${roleLabels[group.role]}`"
+                  :aria-label="
+                    t('poolRemoveAria')
+                      .replace('{champion}', entry.name)
+                      .replace('{role}', roleLabel(group.role))
+                  "
                   @click="removeFromPool(entry.championId, entry.role)"
                 />
                 <v-btn
                   icon="mdi-delete-sweep"
                   size="x-small"
                   variant="text"
-                  :aria-label="`Remove ${entry.name} from all roles`"
+                  :aria-label="t('poolRemoveAllAria').replace('{champion}', entry.name)"
                   @click="removeAllRoles(entry.championId)"
                 />
               </template>
             </v-list-item>
           </v-list>
           <v-card-text v-else class="text-medium-emphasis text-center py-8">
-            No champions tagged for {{ roleLabels[group.role] }} yet.
+            {{ t('poolEmptyRole').replace('{role}', roleLabel(group.role)) }}
           </v-card-text>
         </v-card>
       </v-col>

@@ -39,11 +39,20 @@ export interface PoolEntryView extends ChampionSummary {
 
 export type FetchStatus = 'success' | 'error'
 
+/** Supported interface languages. `'en'` is the default fallback (data-model.md
+ *  § New Type: Language). Adding a language means extending this union, adding a
+ *  catalog file, and widening the migration 003 CHECK constraint. */
+export type Language = 'en' | 'es'
+
 export interface AppSettings {
   manualRole: Role | null
   statsFreshnessHours: number
   lastStatsFetchAt: string | null
   lastStatsFetchStatus: FetchStatus | null
+  /** User's selected interface language. Set on first launch from OS locale
+   *  detection; thereafter reflects the user's explicit choice. Never null in the
+   *  renderer (initialized before the window opens). */
+  language: Language
 }
 
 export type ChampSelectPhase = 'NONE' | 'BAN_PICK' | 'FINALIZATION'

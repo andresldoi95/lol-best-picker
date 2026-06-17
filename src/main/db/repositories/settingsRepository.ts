@@ -1,18 +1,20 @@
 import type { DB } from '../index'
-import type { AppSettings, FetchStatus, Role } from '@shared/types'
+import type { AppSettings, FetchStatus, Language, Role } from '@shared/types'
 
 interface SettingsRow {
   stats_freshness_hours: number
   manual_role: Role | null
   last_stats_fetch_at: string | null
   last_stats_fetch_status: FetchStatus | null
+  language: Language | null
 }
 
 const DEFAULTS: AppSettings = {
   manualRole: null,
   statsFreshnessHours: 24,
   lastStatsFetchAt: null,
-  lastStatsFetchStatus: null
+  lastStatsFetchStatus: null,
+  language: 'en'
 }
 
 /** Read/write the single-row `app_settings` table. */
@@ -22,7 +24,7 @@ export class SettingsRepository {
   get(): AppSettings {
     const row = this.db
       .prepare(
-        `SELECT stats_freshness_hours, manual_role, last_stats_fetch_at, last_stats_fetch_status
+        `SELECT stats_freshness_hours, manual_role, last_stats_fetch_at, last_stats_fetch_status, language
          FROM app_settings WHERE id = 1`
       )
       .get() as SettingsRow | undefined
@@ -33,7 +35,10 @@ export class SettingsRepository {
       manualRole: row.manual_role,
       statsFreshnessHours: row.stats_freshness_hours,
       lastStatsFetchAt: row.last_stats_fetch_at,
-      lastStatsFetchStatus: row.last_stats_fetch_status
+      lastStatsFetchStatus: row.last_stats_fetch_status,
+      // Column is NULL until the first-launch OS-locale seed runs; surface 'en'
+      // as the renderer-facing default so AppSettings.language is never null.
+      language: row.language ?? 'en'
     }
   }
 
@@ -45,5 +50,19 @@ export class SettingsRepository {
   /** Configurable freshness threshold (research.md §5). */
   setStatsFreshnessHours(hours: number): void {
     this.db.prepare('UPDATE app_settings SET stats_freshness_hours = ? WHERE id = 1').run(hours)
+  }
+
+  /** Persist the user's explicit interface-language choice (spec 003 US2). */
+  setLanguage(language: Language): void {
+    this.db.prepare('UPDATE app_settings SET language = ? WHERE id = 1').run(language)
+  }
+
+  /** First-launch only: write the OS-derived default language when none is stored
+   *  yet. The `language IS NULL` guard makes this idempotent — repeated launches
+   *  never overwrite an explicit user choice (spec 003 US3). */
+  initLanguageIfUnset(language: Language): void {
+    this.db
+      .prepare('UPDATE app_settings SET language = ? WHERE id = 1 AND language IS NULL')
+      .run(language)
   }
 }

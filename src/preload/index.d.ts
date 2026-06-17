@@ -2,6 +2,7 @@ import type {
   AppSettings,
   ChampSelectSession,
   ChampionSummary,
+  Language,
   PoolEntryView,
   Recommendation,
   Role
@@ -32,6 +33,7 @@ export interface Api {
     get(): Promise<AppSettings>
     setManualRole(role: Role | null): Promise<void>
     setStatsFreshnessHours(hours: number): Promise<void>
+    setLanguage(language: Language): Promise<void>
   }
 }
 
