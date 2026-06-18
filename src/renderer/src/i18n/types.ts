@@ -52,6 +52,8 @@ export interface Catalog {
   champSelectSummaryOverall: string
   champSelectSummaryEnemy: string
   champSelectSummaryAlly: string
+  champSelectSynergyLive: string
+  champSelectSynergyEstimated: string
 
   // Settings
   settingsTitle: string

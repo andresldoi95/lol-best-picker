@@ -80,6 +80,16 @@ export class StatsRepository {
     return { upserted, skipped }
   }
 
+  /** True once any matchup-specific row (opponent set) is cached. Lets the scheduler
+   *  backfill enemy matchups on launch even when the overall cache is still fresh. */
+  hasMatchupRows(): boolean {
+    return (
+      this.db
+        .prepare('SELECT 1 FROM champion_stats WHERE opponent_champion_id IS NOT NULL LIMIT 1')
+        .get() !== undefined
+    )
+  }
+
   /** Record a failed refresh without touching cached rows (research.md §5). */
   markFetchError(): void {
     this.db

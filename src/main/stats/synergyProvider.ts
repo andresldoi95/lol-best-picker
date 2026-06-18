@@ -1,4 +1,5 @@
 import type { Role } from '@shared/types'
+import type { NormalizedChampionStat } from './statsProvider'
 
 /**
  * A single normalized ally-synergy win-rate row, keyed by Data Dragon slugs
@@ -20,6 +21,11 @@ export interface NormalizedSynergyRow {
   gamesPlayed: number
   /** Patch label this data applies to (e.g. "16.12"). */
   patch: string
+  /** How this row was obtained (spec 004). Optional so the static
+   *  `LolalyticsMatchupProvider` and other implementations need no change;
+   *  `LolalyticsPageRendererProvider` sets `'rendered'` on every row it produces.
+   *  Persisted to `champion_synergy.source`, defaulting to `'static'` when absent. */
+  source?: 'rendered' | 'static'
 }
 
 /** A (champion, role) pair in the player's pool to fetch synergy data for. */
@@ -49,4 +55,22 @@ export interface SynergyProvider {
    *   the current patch). Per-champion fetch errors are swallowed and logged.
    */
   fetchSynergyStats(targets: SynergyProviderTarget[]): Promise<NormalizedSynergyRow[]>
+}
+
+/** Both build-page-derived signals decoded from a single fetch per pool champion. */
+export interface BuildStats {
+  /** Enemy-matchup rows (the candidate's win rate vs each counter) → `champion_stats`. */
+  matchups: NormalizedChampionStat[]
+  /** Ally-synergy rows → the synergy table (empty on current lolalytics pages). */
+  synergy: NormalizedSynergyRow[]
+}
+
+/**
+ * A provider that decodes both the enemy-matchup and ally-synergy signals from one
+ * build-page fetch per target (lolalytics today). Implementations also satisfy
+ * {@link SynergyProvider}; the scheduler prefers `fetchBuildStats` so it persists
+ * enemy matchups too, not just synergy.
+ */
+export interface BuildStatsProvider {
+  fetchBuildStats(targets: SynergyProviderTarget[]): Promise<BuildStats>
 }

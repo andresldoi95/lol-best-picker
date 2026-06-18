@@ -52,6 +52,8 @@ export const es = {
   champSelectSummaryOverall: 'General',
   champSelectSummaryEnemy: 'Enemigo',
   champSelectSummaryAlly: 'Aliado',
+  champSelectSynergyLive: 'Sinergia: en vivo',
+  champSelectSynergyEstimated: 'Sinergia: estimada',
 
   // Settings
   settingsTitle: 'Ajustes',

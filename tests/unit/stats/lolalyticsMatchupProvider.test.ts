@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseSynergyHtml } from '@main/stats/lolalyticsMatchupProvider'
+import { parseSynergyHtml, parseEnemyMatchupsHtml } from '@main/stats/lolalyticsMatchupProvider'
 
 /**
  * Builds a lolalytics build-page Qwik payload mirroring the *verified* live shape
@@ -118,5 +118,39 @@ describe('lolalytics build-page synergy parsing (Qwik payload decode)', () => {
     expect(parseSynergyHtml('<html><body>no payload</body></html>', 'Ahri', 'MIDDLE', '16.12', idToKey, 100)).toEqual(
       []
     )
+  })
+})
+
+describe('lolalytics build-page enemy-matchup parsing (Qwik payload decode)', () => {
+  it('extracts the page champion’s win rate vs each counter under the `enemy` key', () => {
+    const rows = parseEnemyMatchupsHtml(buildHtml({ withSynergy: false }), 'Ahri', 'MIDDLE', '16.12', idToKey, 100)
+
+    const vsSyndra = rows.find((r) => r.opponentChampionKey === 'Syndra')
+    expect(vsSyndra).toMatchObject({
+      championKey: 'Ahri',
+      role: 'MIDDLE',
+      opponentChampionKey: 'Syndra',
+      winRate: 95.0,
+      gamesPlayed: 8000,
+      patch: '16.12'
+    })
+    expect(rows.find((r) => r.opponentChampionKey === 'Zed')?.winRate).toBe(90.0)
+  })
+
+  it('never emits synergy or item win-rates as enemy matchups, nor a self-matchup', () => {
+    const rows = parseEnemyMatchupsHtml(buildHtml({ withSynergy: true }), 'Ahri', 'MIDDLE', '16.12', idToKey, 100)
+    const opponents = rows.map((r) => r.opponentChampionKey)
+    expect(opponents).toContain('Syndra') // legit counter
+    expect(opponents).toContain('Zed') // legit counter
+    expect(opponents).not.toContain('MissFortune') // ally synergy section
+    expect(opponents).not.toContain('Thresh') // ally synergy section
+    expect(opponents).not.toContain('ShouldNeverAppear') // item stats
+    expect(opponents).not.toContain('Ahri') // the candidate champion itself
+  })
+
+  it('returns [] when the Qwik payload is missing (page layout changed)', () => {
+    expect(
+      parseEnemyMatchupsHtml('<html><body>no payload</body></html>', 'Ahri', 'MIDDLE', '16.12', idToKey, 100)
+    ).toEqual([])
   })
 })

@@ -21,6 +21,10 @@ export interface LcuAdapter {
 // Ranked Solo/Duo (420) and Flex (440).
 const RANKED_QUEUE_IDS = new Set<number>([420, 440])
 const POLL_INTERVAL_MS = 1000
+// The LCU routinely returns transient transport errors while champ select is busy
+// (phase transitions, the client briefly stalling). Tolerate a few in a row before
+// declaring the connection dropped, so a single hiccup doesn't freeze the session.
+const MAX_CONSECUTIVE_ERRORS = 5
 
 interface GameflowLobby {
   gameConfig?: { queueId?: number }
@@ -69,38 +73,44 @@ class LcuClientImpl implements LcuClient {
   onChampSelectUpdate(handler: (session: ChampSelectSession | null) => void): () => void {
     let lastKey: string | null = null
     let stopped = false
-    let wasConnected = true
-    let pollCount = 0
+    let consecutiveErrors = 0
+
+    const interval = setInterval(() => void tick(), POLL_INTERVAL_MS)
+
+    function stop(): void {
+      stopped = true
+      clearInterval(interval)
+    }
 
     const tick = async (): Promise<void> => {
       if (stopped) return
       try {
         const session = await this.getChampSelectSession()
-        wasConnected = true
+        // A successful poll after an error blip re-establishes the connection.
+        // Reset lastKey so the current state is re-pushed even if it is unchanged,
+        // recovering from a transient disconnect that may have marked us inactive.
+        if (consecutiveErrors > 0) lastKey = null
+        consecutiveErrors = 0
         const key = sessionKey(session)
-        pollCount++
-        if (pollCount % 10 === 0) console.log(`LCU: Poll #${pollCount}, active=${session?.active}`)
         if (key !== lastKey) {
-          console.log('LCU: Session changed, invoking handler')
           lastKey = key
           handler(session)
         }
       } catch (err) {
-        console.error('LCU: Poll error:', err)
-        if (wasConnected) {
-          wasConnected = false
+        consecutiveErrors++
+        if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+          // Sustained failure: the client likely closed. Stop polling these now-stale
+          // credentials and let the caller reconnect (and rediscover fresh creds).
+          console.error('LCU: Connection lost after repeated poll errors:', err)
+          stop()
           this.fireDisconnect()
         }
       }
     }
 
-    const interval = setInterval(() => void tick(), POLL_INTERVAL_MS)
     void tick()
 
-    return () => {
-      stopped = true
-      clearInterval(interval)
-    }
+    return stop
   }
 
   onDisconnect(handler: () => void): void {

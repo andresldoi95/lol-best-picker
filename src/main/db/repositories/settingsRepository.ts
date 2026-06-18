@@ -1,5 +1,5 @@
 import type { DB } from '../index'
-import type { AppSettings, FetchStatus, Language, Role } from '@shared/types'
+import type { AppSettings, FetchStatus, Language, Role, SynergyFetchStatus } from '@shared/types'
 
 interface SettingsRow {
   stats_freshness_hours: number
@@ -7,6 +7,8 @@ interface SettingsRow {
   last_stats_fetch_at: string | null
   last_stats_fetch_status: FetchStatus | null
   language: Language | null
+  last_synergy_fetch_at: string | null
+  last_synergy_fetch_status: SynergyFetchStatus | null
 }
 
 const DEFAULTS: AppSettings = {
@@ -14,7 +16,9 @@ const DEFAULTS: AppSettings = {
   statsFreshnessHours: 24,
   lastStatsFetchAt: null,
   lastStatsFetchStatus: null,
-  language: 'en'
+  language: 'en',
+  lastSynergyFetchAt: null,
+  lastSynergyFetchStatus: null
 }
 
 /** Read/write the single-row `app_settings` table. */
@@ -24,7 +28,8 @@ export class SettingsRepository {
   get(): AppSettings {
     const row = this.db
       .prepare(
-        `SELECT stats_freshness_hours, manual_role, last_stats_fetch_at, last_stats_fetch_status, language
+        `SELECT stats_freshness_hours, manual_role, last_stats_fetch_at, last_stats_fetch_status,
+                language, last_synergy_fetch_at, last_synergy_fetch_status
          FROM app_settings WHERE id = 1`
       )
       .get() as SettingsRow | undefined
@@ -38,7 +43,10 @@ export class SettingsRepository {
       lastStatsFetchStatus: row.last_stats_fetch_status,
       // Column is NULL until the first-launch OS-locale seed runs; surface 'en'
       // as the renderer-facing default so AppSettings.language is never null.
-      language: row.language ?? 'en'
+      language: row.language ?? 'en',
+      // NULL until the first synergy render attempt completes (spec 004).
+      lastSynergyFetchAt: row.last_synergy_fetch_at ?? null,
+      lastSynergyFetchStatus: row.last_synergy_fetch_status ?? null
     }
   }
 

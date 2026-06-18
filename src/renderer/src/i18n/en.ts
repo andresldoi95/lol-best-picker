@@ -49,6 +49,8 @@ export const en = {
   champSelectSummaryOverall: 'Overall',
   champSelectSummaryEnemy: 'Enemy',
   champSelectSummaryAlly: 'Ally',
+  champSelectSynergyLive: 'Synergy: live',
+  champSelectSynergyEstimated: 'Synergy: estimated',
 
   // Settings
   settingsTitle: 'Settings',
