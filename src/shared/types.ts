@@ -39,6 +39,18 @@ export interface PoolEntryView extends ChampionSummary {
 
 export type FetchStatus = 'success' | 'error'
 
+/** Outcome of the last ally-synergy DOM render attempt (spec 004). `'rendered'` =
+ *  the hidden-BrowserWindow render produced live pair win rates; `'error'` = the
+ *  attempt failed and the engine fell back to overall WR. `null` (in AppSettings)
+ *  = never attempted. */
+export type SynergyFetchStatus = 'rendered' | 'error'
+
+/** Provenance of the ally-synergy signal backing a `Recommendation` (spec 004).
+ *  `'rendered'` = scores reflect live pair win rates from the last successful render;
+ *  `'fallback'` = no successful render on record (never attempted or last errored),
+ *  so ally scores use the overall-WR fallback (spec 002 FR-011). */
+export type SynergySource = 'rendered' | 'fallback'
+
 /** Supported interface languages. `'en'` is the default fallback (data-model.md
  *  § New Type: Language). Adding a language means extending this union, adding a
  *  catalog file, and widening the migration 003 CHECK constraint. */
@@ -53,6 +65,10 @@ export interface AppSettings {
    *  detection; thereafter reflects the user's explicit choice. Never null in the
    *  renderer (initialized before the window opens). */
   language: Language
+  /** ISO-8601 timestamp of the last synergy render attempt; null = never attempted (spec 004). */
+  lastSynergyFetchAt: string | null
+  /** Outcome of the last synergy render attempt; null = never attempted (spec 004). */
+  lastSynergyFetchStatus: SynergyFetchStatus | null
 }
 
 export type ChampSelectPhase = 'NONE' | 'BAN_PICK' | 'FINALIZATION'
@@ -122,4 +138,7 @@ export interface Recommendation {
   statsAsOfPatch: string
   /** ISO-8601 — drives the "last updated" indicator (FR-014). */
   lastUpdatedAt: string
+  /** Whether the ally-synergy signal came from a live render or the overall-WR
+   *  fallback — drives the "Synergy: live / estimated" chip (spec 004 US3). */
+  synergySource: SynergySource
 }

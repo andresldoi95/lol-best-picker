@@ -34,6 +34,10 @@ const entries = computed(() => recommendation.value?.entries ?? [])
 const topPick = computed(() => entries.value[0] ?? null)
 const restPicks = computed(() => entries.value.slice(1))
 
+// Whether the ally-synergy signal came from a live render (vs. the overall-WR
+// fallback) — drives the "Synergy: live / estimated" chip (spec 004 US3).
+const synergyLive = computed(() => recommendation.value?.synergySource === 'rendered')
+
 const manualRoleModel = computed<Role | null>({
   get: () => settings.value?.manualRole ?? null,
   set: (role) => {
@@ -138,6 +142,21 @@ function formatScore(score: number): string {
         <v-icon start icon="mdi-circle" size="x-small" /> {{ t('champSelectLiveChip') }}
       </v-chip>
       <v-spacer />
+      <!-- spec 004 US3: ally-synergy provenance — live render vs. overall-WR fallback. -->
+      <v-chip
+        v-if="recommendation"
+        size="small"
+        variant="tonal"
+        :color="synergyLive ? 'success' : undefined"
+        class="me-2"
+      >
+        <v-icon
+          start
+          :icon="synergyLive ? 'mdi-check-circle' : 'mdi-information-outline'"
+          size="x-small"
+        />
+        {{ synergyLive ? t('champSelectSynergyLive') : t('champSelectSynergyEstimated') }}
+      </v-chip>
       <FreshnessIndicator
         v-if="recommendation"
         :freshness="recommendation.freshness"

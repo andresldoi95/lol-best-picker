@@ -14,7 +14,7 @@ import { registerIpcHandlers } from './ipc/handlers'
 import { createLcuAdapter, type LcuClient } from './lcu/champSelectAdapter'
 import { inactiveSession } from './lcu/normalize'
 import { LolalyticsStatsProvider } from './stats/lolalyticsStatsProvider'
-import { LolalyticsMatchupProvider } from './stats/lolalyticsMatchupProvider'
+import { LolalyticsPageRendererProvider } from './stats/lolalyticsPageRendererProvider'
 import { startStatsRefresh } from './stats'
 import { IPC } from '@shared/ipcChannels'
 import type { ChampSelectSession } from '@shared/types'
@@ -71,8 +71,23 @@ function persistSnapshot(): void {
   })
 }
 
+// How often to retry discovering the League Client when none is connected. The
+// client may be launched after the app, or restarted mid-session (new port), so
+// connection has to be continuously (re)attempted rather than one-shot at startup.
+const LCU_RECONNECT_MS = 3000
+let lcuStopPolling: (() => void) | null = null
+let lcuReconnectTimer: ReturnType<typeof setTimeout> | null = null
+
+function scheduleLcuReconnect(): void {
+  if (lcuReconnectTimer) return
+  lcuReconnectTimer = setTimeout(() => {
+    lcuReconnectTimer = null
+    void connectLcu()
+  }, LCU_RECONNECT_MS)
+}
+
 function wireLcuClient(client: LcuClient): void {
-  client.onChampSelectUpdate((nextSession) => {
+  lcuStopPolling = client.onChampSelectUpdate((nextSession) => {
     // null = left champ select: retain last role/enemies but mark inactive (US3).
     currentSession = nextSession ?? { ...currentSession, active: false }
     persistSnapshot()
@@ -80,9 +95,13 @@ function wireLcuClient(client: LcuClient): void {
   })
 
   client.onDisconnect(() => {
+    console.log('LCU: Disconnected — will attempt to reconnect')
+    lcuStopPolling?.()
+    lcuStopPolling = null
     currentSession = { ...currentSession, active: false }
     persistSnapshot()
     pushUpdates()
+    scheduleLcuReconnect() // pick the client back up when it returns
   })
 }
 
@@ -90,8 +109,10 @@ async function connectLcu(): Promise<void> {
   const adapter = createLcuAdapter()
   const client = await adapter.connect()
   if (!client) {
-    console.log('LCU: No League Client running')
-    return // no client running — snapshot/default session already hydrated (US3)
+    // No client running yet — snapshot/default session already hydrated (US3).
+    // Keep retrying so the app connects whether League starts before or after it.
+    scheduleLcuReconnect()
+    return
   }
 
   console.log('LCU: Connected to League Client')
@@ -145,13 +166,18 @@ function wireServices(database: DB): void {
   // freshness and the app keeps serving the bundled/cached rows (offline-first).
   const idToKey = new Map<number, string>()
   const keyToId = new Map<string, number>()
+  const slugToKey = new Map<string, string>()
   for (const champion of champions.list()) {
     idToKey.set(champion.championId, champion.key)
     keyToId.set(champion.key, champion.championId)
+    // lolalytics portrait URLs/build slugs are lowercase Data Dragon keys (spec 004).
+    slugToKey.set(champion.key.toLowerCase(), champion.key)
   }
   const provider = new LolalyticsStatsProvider({ idToKey })
-  // Pool-scoped ally synergy, fetched on the same cycle (spec 002, research.md §5).
-  const synergyProvider = new LolalyticsMatchupProvider({ idToKey, keyToId })
+  // Pool-scoped ally synergy via hidden-BrowserWindow page rendering (spec 004,
+  // research.md §2–4). Drop-in for LolalyticsMatchupProvider: enemy matchups are
+  // still decoded from the static Qwik JSON (delegated), synergy from the rendered DOM.
+  const synergyProvider = new LolalyticsPageRendererProvider({ idToKey, keyToId, slugToKey })
   startStatsRefresh({
     provider,
     stats,

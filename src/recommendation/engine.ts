@@ -4,7 +4,8 @@ import type {
   RecommendationEntry,
   Role,
   ScoreBasis,
-  ScoreBreakdown
+  ScoreBreakdown,
+  SynergySource
 } from '@shared/types'
 import { compareScored, type Scored } from './tieBreak'
 import { deriveFreshness, type FreshnessInput } from './freshness'
@@ -50,6 +51,10 @@ export interface RecommendationInput {
   allyChampionIds: number[]
   freshness: FreshnessInput
   statsAsOfPatch: string
+  /** Provenance of the ally-synergy signal, echoed onto the result for the UI chip
+   *  (spec 004). The engine threads it through unchanged; the caller derives it from
+   *  `AppSettings.lastSynergyFetchStatus`. Defaults to `'fallback'` when omitted. */
+  synergySource?: SynergySource
 }
 
 interface ScoredCandidate extends Scored {
@@ -177,7 +182,8 @@ export function computeRecommendation(input: RecommendationInput): Recommendatio
     allyChampionIds: [...allyChampionIds],
     freshness: deriveFreshness(freshness),
     statsAsOfPatch,
-    lastUpdatedAt: freshness.lastFetchAt ?? freshness.now
+    lastUpdatedAt: freshness.lastFetchAt ?? freshness.now,
+    synergySource: input.synergySource ?? 'fallback'
   }
 
   // role === null → caller shows the role-selection prompt (FR-007).

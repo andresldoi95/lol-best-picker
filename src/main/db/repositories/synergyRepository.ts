@@ -49,8 +49,8 @@ export class SynergyRepository {
     const now = new Date().toISOString()
     const insert = this.db.prepare(
       `INSERT OR REPLACE INTO champion_synergy
-         (champion_id, role, ally_champion_id, win_rate, games_played, patch, fetched_at)
-       VALUES (@championId, @role, @allyChampionId, @winRate, @gamesPlayed, @patch, @fetchedAt)`
+         (champion_id, role, ally_champion_id, win_rate, games_played, patch, fetched_at, source)
+       VALUES (@championId, @role, @allyChampionId, @winRate, @gamesPlayed, @patch, @fetchedAt, @source)`
     )
 
     let upserted = 0
@@ -70,7 +70,10 @@ export class SynergyRepository {
           winRate: row.winRate,
           gamesPlayed: row.gamesPlayed,
           patch: row.patch,
-          fetchedAt: now
+          fetchedAt: now,
+          // 'rendered' rows come from LolalyticsPageRendererProvider; legacy/static
+          // rows (or any provider that omits source) persist as 'static' (spec 004).
+          source: row.source ?? 'static'
         })
         upserted++
       }
@@ -78,6 +81,33 @@ export class SynergyRepository {
     apply()
 
     return { upserted, skipped }
+  }
+
+  /**
+   * Record a successful synergy render in `app_settings` (spec 004). Parallels
+   * `StatsRepository.markFetchError()` but writes synergy-specific freshness so the
+   * UI can show "Synergy: live" independently of the overall stats fetch status.
+   */
+  markSynergyFetchRendered(): void {
+    this.db
+      .prepare(
+        `UPDATE app_settings
+         SET last_synergy_fetch_at = @now, last_synergy_fetch_status = 'rendered'
+         WHERE id = 1`
+      )
+      .run({ now: new Date().toISOString() })
+  }
+
+  /** Record a failed synergy render without touching cached `champion_synergy`
+   *  rows — the engine keeps falling back to overall WR (spec 004 US2). */
+  markSynergyFetchError(): void {
+    this.db
+      .prepare(
+        `UPDATE app_settings
+         SET last_synergy_fetch_at = @now, last_synergy_fetch_status = 'error'
+         WHERE id = 1`
+      )
+      .run({ now: new Date().toISOString() })
   }
 
   /**

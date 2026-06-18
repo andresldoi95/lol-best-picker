@@ -1,5 +1,5 @@
 import { computeRecommendation } from '@recommendation/engine'
-import type { ChampSelectSession, Recommendation } from '@shared/types'
+import type { ChampSelectSession, Recommendation, SynergySource } from '@shared/types'
 import type { PoolRepository } from './db/repositories/poolRepository'
 import type { StatsRepository } from './db/repositories/statsRepository'
 import type { SettingsRepository } from './db/repositories/settingsRepository'
@@ -40,6 +40,12 @@ export class RecommendationService {
     const { rows: statRows, patch } = this.stats.getStatRowsForChampions(championIds)
     const synergyRows = this.synergy.getSynergyRowsForChampions(championIds)
 
+    // Live pair win rates are only on record when the last render succeeded;
+    // otherwise (never attempted, or errored) ally scores use the overall-WR
+    // fallback (spec 002 FR-011) — surfaced as the "Synergy: estimated" chip (US3).
+    const synergySource: SynergySource =
+      settings.lastSynergyFetchStatus === 'rendered' ? 'rendered' : 'fallback'
+
     return computeRecommendation({
       poolEntries,
       statRows,
@@ -48,6 +54,7 @@ export class RecommendationService {
       enemyChampionIds: session.enemyChampionIds,
       allyChampionIds: session.allyChampionIds,
       statsAsOfPatch: patch,
+      synergySource,
       freshness: {
         lastFetchAt: settings.lastStatsFetchAt,
         lastFetchStatus: settings.lastStatsFetchStatus,

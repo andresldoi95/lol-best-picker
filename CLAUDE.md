@@ -70,9 +70,23 @@ External stats are scraped from **lolalytics** (`src/main/stats/lolalytics*`) �
 compliant (the obfuscated internal `a1.lolalytics.com` API is deliberately avoided). Fetch
 failures downgrade freshness and fall back to bundled seed data; they never throw away the cache.
 
+**Synergy data requires client-side JS execution** (lolalytics lazy-loads it via its internal
+API). `LolalyticsPageRendererProvider` (`src/main/stats/lolalyticsPageRendererProvider.ts`)
+renders each pool champion's build page in a hidden `BrowserWindow` and extracts the synergy
+table from the rendered DOM (`parseSynergyDom`, a pure, unit-tested function with no Electron
+import). BrowserWindow is used instead of Puppeteer because Electron already bundles Chromium —
+adding Puppeteer/Playwright would mean a second ~150–300 MB Chromium download for zero capability
+gain, so BrowserWindow is the **zero-new-dependency** choice (Constitution VII / FR-013). The
+window uses a dedicated session partition (`persist:synergy-render`) specifically to **avoid the
+`applyContentSecurityPolicy()` CSP hook** installed on `session.defaultSession` — that hook's
+`connect-src 'self'` would block the page's own `fetch()` and the synergy table would never
+populate (research.md §3). The `a1.lolalytics.com` endpoint is still never called directly; the
+page's own JS calls it when rendered (Constitution II). Synergy freshness is tracked separately
+in `app_settings` (`last_synergy_fetch_*`) and surfaced as a "Synergy: live/estimated" chip.
+
 ## Active Feature Plan
 
-**Feature**: Multi-Language Support
-**Branch**: `003-multi-language-support`
-**Plan**: [specs/003-multi-language-support/plan.md](specs/003-multi-language-support/plan.md)
-**Spec**: [specs/003-multi-language-support/spec.md](specs/003-multi-language-support/spec.md)
+**Feature**: Live Synergy Data via Browser Rendering
+**Branch**: `004-puppeteer-synergy-render`
+**Plan**: [specs/004-puppeteer-synergy-render/plan.md](specs/004-puppeteer-synergy-render/plan.md)
+**Spec**: [specs/004-puppeteer-synergy-render/spec.md](specs/004-puppeteer-synergy-render/spec.md)
