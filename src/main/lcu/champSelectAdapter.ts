@@ -1,12 +1,16 @@
-import type { ChampSelectSession } from '@shared/types'
+import type { ChampSelectSession, EloTier } from '@shared/types'
 import { discoverCredentials, lcuGet, type LcuCredentials } from './connection'
 import { normalizeChampSelectSession, type RawLcuSession } from './normalize'
+import { normalizeLcuTier } from '@recommendation/types'
 
 export interface LcuClient {
   /** GET /lol-champ-select/v1/session, normalized; `null` when not in champ select. */
   getChampSelectSession(): Promise<ChampSelectSession | null>
   /** Confirms ranked Solo/Duo or Flex (gameflow-phase + lobby queue). */
   isRankedChampSelect(): Promise<boolean>
+  /** Current ranked tier (Solo/Duo preferred), normalized; `null` when unranked or
+   *  unavailable → caller uses the default tier (FR-008/FR-009). Read-only (Principle II). */
+  getCurrentRankedTier(): Promise<EloTier | null>
   /** Subscribe to champ-select changes; returns an unsubscribe function. */
   onChampSelectUpdate(handler: (session: ChampSelectSession | null) => void): () => void
   /** Fires when the LCU connection drops (client closed / lockfile removed). */
@@ -28,6 +32,12 @@ const MAX_CONSECUTIVE_ERRORS = 5
 
 interface GameflowLobby {
   gameConfig?: { queueId?: number }
+}
+
+/** Subset of GET /lol-ranked/v1/current-ranked-stats we consume (tier strings only). */
+interface RawRankedStats {
+  highestRankedEntry?: { tier?: string }
+  queueMap?: Record<string, { tier?: string } | undefined>
 }
 
 /** Stable identity of a session for change detection (ignores the timestamp).
@@ -62,6 +72,17 @@ class LcuClientImpl implements LcuClient {
     const lobby = await lcuGet<GameflowLobby>(this.creds, '/lol-lobby/v2/lobby')
     const queueId = lobby.body?.gameConfig?.queueId
     return typeof queueId === 'number' && RANKED_QUEUE_IDS.has(queueId)
+  }
+
+  async getCurrentRankedTier(): Promise<EloTier | null> {
+    const { body } = await lcuGet<RawRankedStats>(
+      this.creds,
+      '/lol-ranked/v1/current-ranked-stats'
+    )
+    if (!body) return null
+    // Prefer Solo/Duo; fall back to the player's highest ranked entry across queues.
+    const solo = body.queueMap?.['RANKED_SOLO_5x5']?.tier
+    return normalizeLcuTier(solo ?? body.highestRankedEntry?.tier ?? null)
   }
 
   /**

@@ -8,6 +8,7 @@ export const en = {
   // App shell / navigation
   navPool: 'Pool',
   navChampSelect: 'Champ Select',
+  navBans: 'Bans',
   navSettings: 'Settings',
 
   // Roles
@@ -74,6 +75,17 @@ export const en = {
   settingsStatusUnknown: 'unknown',
   settingsLanguageTitle: 'Language',
   settingsLanguageSubtitle: 'Choose the language for the app interface.',
+
+  // Ban Recommendations (spec 007)
+  bansTitle: 'Recommended Bans',
+  bansSubtitle: 'The strongest champions to ban in each role at your Elo, ranked by win rate.',
+  bansEloLabel: 'Elo: {elo}',
+  bansEloDefault: 'default',
+  bansEmpty: 'No ban data available yet. Check back once stats have loaded.',
+  bansRoleEmpty: 'No data',
+  banCardWinRate: '{wr}% win rate',
+  banCardWinRateShort: '{wr}% WR',
+  banCardPickRate: '{pr}% pick',
 
   // Freshness Indicator
   freshnessLive: 'Live',

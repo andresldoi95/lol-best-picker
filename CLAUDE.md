@@ -20,7 +20,7 @@ src/
 ├── recommendation/   # PURE engine: filter → score → rank → tie-break → freshness (NO electron/vue imports)
 ├── main/             # Electron main: SQLite + repositories, LCU adapter, lolalytics stats/synergy providers, IPC
 ├── preload/          # contextBridge — typed, whitelisted `window.api`
-└── renderer/         # Vue 3 + Vuetify (Pool, Champ Select, Settings views)
+└── renderer/         # Vue 3 + Vuetify (Pool, Champ Select, Bans, Settings views)
 ```
 
 - Path aliases (`electron.vite.config.ts` + tsconfigs): `@shared`, `@recommendation`, `@main`
@@ -84,6 +84,28 @@ populate (research.md §3). The `a1.lolalytics.com` endpoint is still never call
 page's own JS calls it when rendered (Constitution II). Synergy freshness is tracked separately
 in `app_settings` (`last_synergy_fetch_*`) and surfaced as a "Synergy: live/estimated" chip.
 
+**Role-based ban recommendations** (spec 007). A second pure engine,
+`src/recommendation/banRanker.ts` (`rankBans`, no electron/vue imports, unit-tested
+like the pick engine), ranks the **top 3 champions per role per Elo** by a **threat
+score** = `(winRate − 50) × pickRate` (not raw win rate — that surfaces low-pick-rate
+one-tricks; the threat score weights win-rate edge by how often you'll face the
+champion, with a low-presence floor). Pick rate comes from the same lolalytics
+tier-list payload (`parseTierlistHtml` now captures `pr`); when absent (bundled
+seed) presence is estimated from games-share. Bans are NOT pool-constrained
+(Constitution I is N/A for bans). Ban data
+is the same lolalytics tier-list win rates the pick pipeline already scrapes, so
+`src/main/stats/banStatsProvider.ts` **reuses `LolalyticsStatsProvider`** at a
+per-Elo `tier=` (zero new scraper; FR-006). It's cached in the `ban_stats` table
+(migration `005_add_ban_stats.sql`), refreshed by `startBanStatsRefresh()` (24h +
+on LCU tier change), and served by `BanRecommendationService`
+(`src/main/banRecommendationService.ts`) over the `ban:fetch-recommendations` IPC
+channel to a dedicated `/bans` view. The player's Elo comes from the LCU
+(`getCurrentRankedTier()` → `/lol-ranked/v1/current-ranked-stats`, read-only,
+`normalizeLcuTier`), falling back to `DEFAULT_ELO_TIER` ('emerald') when unranked
+(FR-008/FR-009). Ban freshness is tracked separately in `app_settings`
+(`last_ban_stats_fetch_*`) via the shared `deriveFreshness()`. Dev notes:
+[docs/ban-recommendations-dev-guide.md](docs/ban-recommendations-dev-guide.md).
+
 **Installer / user-level config** (spec 005). `src/main/installer/` is another
 **Electron-free, unit-tested** module (like `src/recommendation/`): `paths.ts`,
 `storage.ts` (`.env.local` parse/serialize), `config.ts` (env-merge precedence +
@@ -103,8 +125,8 @@ Vitest-testable — manual QA lives in [docs/installer-testing-guide.md](docs/in
 ## Active Feature Plan
 
 <!-- SPECKIT START -->
-**Feature**: Live Champion Selection State Management
-**Branch**: `006-live-champ-select`
-**Plan**: [specs/006-live-champ-select/plan.md](specs/006-live-champ-select/plan.md)
-**Spec**: [specs/006-live-champ-select/spec.md](specs/006-live-champ-select/spec.md)
+**Feature**: Role-Based Ban Recommendations
+**Branch**: `007-role-based-bans`
+**Plan**: [specs/007-role-based-bans/plan.md](specs/007-role-based-bans/plan.md)
+**Spec**: [specs/007-role-based-bans/spec.md](specs/007-role-based-bans/spec.md)
 <!-- SPECKIT END -->

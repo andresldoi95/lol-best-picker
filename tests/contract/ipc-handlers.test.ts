@@ -6,7 +6,9 @@ import { ChampionsRepository } from '@main/db/repositories/championsRepository'
 import { SettingsRepository } from '@main/db/repositories/settingsRepository'
 import { StatsRepository } from '@main/db/repositories/statsRepository'
 import { SynergyRepository } from '@main/db/repositories/synergyRepository'
+import { BanStatsRepository } from '@main/db/repositories/banStatsRepository'
 import { RecommendationService } from '@main/recommendationService'
+import { BanRecommendationService } from '@main/banRecommendationService'
 import { createTempDbFile, openSeededDb } from '../helpers/db'
 import type { DB } from '@main/db'
 import type {
@@ -34,6 +36,7 @@ describe('IPC handler map (contract)', () => {
     const settings = new SettingsRepository(db)
     const stats = new StatsRepository(db)
     const synergy = new SynergyRepository(db)
+    const banStats = new BanStatsRepository(db)
 
     session = {
       active: true,
@@ -46,13 +49,18 @@ describe('IPC handler map (contract)', () => {
     }
 
     const recService = new RecommendationService(pool, stats, synergy, settings, () => session)
+    const banService = new BanRecommendationService(banStats, settings, () => ({
+      tier: 'emerald',
+      resolved: false
+    }))
 
     return createHandlerMap({
       pool,
       champions,
       settings,
       getRecommendation: () => recService.getRecommendation(),
-      getChampSelectStatus: () => session
+      getChampSelectStatus: () => session,
+      getBanRecommendations: (elo) => banService.get(elo)
     })
   }
 

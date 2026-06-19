@@ -12,6 +12,10 @@ export interface NormalizedChampionStat {
   opponentChampionKey: string | null
   /** 0.0–100.0 */
   winRate: number
+  /** Pick rate (presence) as a percentage, 0–100; null when the source omits it.
+   *  Only the overall tier-list rows carry it; unused by the pick engine, consumed
+   *  by ban ranking (spec 007 threat score). */
+  pickRate?: number | null
   /** Sample size; 0 if unknown but the row is still meaningful. */
   gamesPlayed: number
   /** e.g. "14.12" */
