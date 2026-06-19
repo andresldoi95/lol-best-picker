@@ -54,6 +54,8 @@ export interface Catalog {
   champSelectSummaryAlly: string
   champSelectSynergyLive: string
   champSelectSynergyEstimated: string
+  champSelectInactiveTitle: string
+  champSelectInactiveMessage: string
 
   // Settings
   settingsTitle: string
