@@ -6,7 +6,10 @@ import type {
   Role,
   Language,
   BanRecommendationSet,
-  EloTier
+  EloTier,
+  CounterFilter,
+  PersonalCounterSet,
+  GameRecordedEvent
 } from '@shared/types'
 
 /** Whitelisted request/response invoke — rejects any non-allowlisted channel. */
@@ -63,6 +66,14 @@ const api = {
       invoke<BanRecommendationSet>(IPC.BAN_FETCH_RECOMMENDATIONS, elo ?? null),
     onUpdate: (callback: (bans: BanRecommendationSet) => void) =>
       subscribe<BanRecommendationSet>(IPC.BAN_STATS_UPDATED, callback)
+  },
+  game: {
+    /** Fetch personal counters. Omit `filter` for all roles at the current tier (spec 008 US2). */
+    fetchCounters: (filter?: CounterFilter) =>
+      invoke<PersonalCounterSet>(IPC.GAME_FETCH_COUNTERS, filter ?? {}),
+    /** Subscribe to "a new game was recorded" events so an open view can refresh (spec 008). */
+    onRecordOutcome: (callback: (event: GameRecordedEvent) => void) =>
+      subscribe<GameRecordedEvent>(IPC.GAME_RECORD_OUTCOME, callback)
   }
 }
 

@@ -106,6 +106,31 @@ channel to a dedicated `/bans` view. The player's Elo comes from the LCU
 (`last_ban_stats_fetch_*`) via the shared `deriveFreshness()`. Dev notes:
 [docs/ban-recommendations-dev-guide.md](docs/ban-recommendations-dev-guide.md).
 
+**Local game statistics & personal counters** (spec 008). A third data-collection pipeline,
+`src/main/gameRecorder.ts` (non-blocking service, `startGameRecorder`), polls the **read-only**
+LCU match-history endpoint (`/lol-match-history/v1/products/lol/current-summoner/matches`, plus
+`/lol-summoner/v1/current-summoner` for the PUUID — both added to `LcuClient`) every 5 min and on
+connect, and records completed games in the `game_records` table (migration
+`006_add_game_records.sql`). LCU payload → record parsing is a **pure, unit-tested** function
+`buildGameRecord` in `src/main/lcu/matchHistory.ts` (no electron import, like `lcu/normalize.ts`):
+it splits allies/enemies by team, filters to ranked/normal queues, and prefers the
+champion-select role (FR-010) over the match lane. Inserts are `INSERT OR IGNORE` on a UNIQUE
+`timestamp` (idempotent dedupe across re-polls). A pure engine,
+`src/recommendation/counterAnalyzer.ts` (no electron/vue imports, unit-tested like pick/ban engines),
+ranks opponent champions by **threat score** = `(50 - win_rate%) × min(1, games/5)`, surfacing
+personal counters (champions the player loses to most frequently) independent of champion pool or
+official statistics — Constitution I is N/A for counters. Counter data is filtered by player role
+(via champion-select role from LCU) and player tier (current tier only, with an "other tiers" badge
+for historical context). Confidence tiers ("Potential" 1–2 games, "Likely" 3–9, "Confirmed" 10+)
+prevent over-weighting low-sample outliers. `GameAnalyticsService`
+(`src/main/gameAnalyticsService.ts`, the counters analogue of `BanRecommendationService`) resolves
+tier/role, calls the engine, enriches with champion name/icon, and derives freshness; it's served
+over the `game:fetch-counters` IPC channel to a dedicated `/counters` view. A `game:record-outcome`
+event pushes new captures to the renderer so an open view refreshes live. Capture freshness is
+tracked in `app_settings` (`last_game_record_fetch_*`) via the shared `deriveFreshness()`. No new
+dependencies; reuses SQLite, existing LCU patterns, and Vitest. Dev notes:
+[specs/008-local-game-stats/quickstart.md](specs/008-local-game-stats/quickstart.md).
+
 **Installer / user-level config** (spec 005). `src/main/installer/` is another
 **Electron-free, unit-tested** module (like `src/recommendation/`): `paths.ts`,
 `storage.ts` (`.env.local` parse/serialize), `config.ts` (env-merge precedence +
@@ -125,8 +150,8 @@ Vitest-testable — manual QA lives in [docs/installer-testing-guide.md](docs/in
 ## Active Feature Plan
 
 <!-- SPECKIT START -->
-**Feature**: Role-Based Ban Recommendations
-**Branch**: `007-role-based-bans`
-**Plan**: [specs/007-role-based-bans/plan.md](specs/007-role-based-bans/plan.md)
-**Spec**: [specs/007-role-based-bans/spec.md](specs/007-role-based-bans/spec.md)
+**Feature**: Local Game Statistics & Personal Counters
+**Branch**: `008-local-game-stats`
+**Plan**: [specs/008-local-game-stats/plan.md](specs/008-local-game-stats/plan.md)
+**Spec**: [specs/008-local-game-stats/spec.md](specs/008-local-game-stats/spec.md)
 <!-- SPECKIT END -->

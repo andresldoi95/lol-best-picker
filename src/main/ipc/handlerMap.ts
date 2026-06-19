@@ -2,8 +2,10 @@ import { IPC } from '@shared/ipcChannels'
 import type {
   BanRecommendationSet,
   ChampSelectSession,
+  CounterFilter,
   EloTier,
   Language,
+  PersonalCounterSet,
   Recommendation,
   Role
 } from '@shared/types'
@@ -26,6 +28,8 @@ export interface IpcDependencies {
   getChampSelectStatus: () => ChampSelectSession
   /** Computes role-segmented ban recommendations for `elo` (null → current Elo, spec 007). */
   getBanRecommendations: (elo: EloTier | null) => BanRecommendationSet
+  /** Computes personal counters for the given filter (role/tier; spec 008). */
+  getCounters: (filter: CounterFilter) => PersonalCounterSet
 }
 
 // The IPC boundary is inherently dynamic — args are erased across the contextBridge.
@@ -64,6 +68,9 @@ export function createHandlerMap(deps: IpcDependencies): IpcHandlerMap {
 
     // Ban recommendations (spec 007 US1). `elo` omitted/null → main's current Elo.
     [IPC.BAN_FETCH_RECOMMENDATIONS]: (elo?: EloTier | null) =>
-      deps.getBanRecommendations(elo ?? null)
+      deps.getBanRecommendations(elo ?? null),
+
+    // Personal counters (spec 008 US2). `filter` omitted → all roles, current tier.
+    [IPC.GAME_FETCH_COUNTERS]: (filter?: CounterFilter) => deps.getCounters(filter ?? {})
   }
 }

@@ -60,6 +60,7 @@ const navItems = computed(() => [
   { to: '/', label: t('navPool'), icon: 'mdi-account-multiple' },
   { to: '/champ-select', label: t('navChampSelect'), icon: 'mdi-sword-cross' },
   { to: '/bans', label: t('navBans'), icon: 'mdi-skull-outline' },
+  { to: '/counters', label: t('navCounters'), icon: 'mdi-target-account' },
   { to: '/settings', label: t('navSettings'), icon: 'mdi-cog' }
 ])
 </script>

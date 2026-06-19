@@ -9,9 +9,12 @@ import { SettingsRepository } from './db/repositories/settingsRepository'
 import { StatsRepository } from './db/repositories/statsRepository'
 import { SynergyRepository } from './db/repositories/synergyRepository'
 import { BanStatsRepository } from './db/repositories/banStatsRepository'
+import { GameRecordsRepository } from './db/repositories/gameRecordsRepository'
 import { SnapshotRepository } from './db/repositories/snapshotRepository'
 import { RecommendationService } from './recommendationService'
 import { BanRecommendationService, type CurrentElo } from './banRecommendationService'
+import { GameAnalyticsService } from './gameAnalyticsService'
+import { startGameRecorder, type GameRecorderHandle } from './gameRecorder'
 import { registerIpcHandlers } from './ipc/handlers'
 import { createLcuAdapter, type LcuClient } from './lcu/champSelectAdapter'
 import { inactiveSession } from './lcu/normalize'
@@ -30,6 +33,9 @@ let banRecommendationService: BanRecommendationService | null = null
 let settingsRepository: SettingsRepository | null = null
 let snapshotRepository: SnapshotRepository | null = null
 let banRefresh: { stop: () => void; refresh: () => Promise<boolean> } | null = null
+let gameRecorder: GameRecorderHandle | null = null
+/** The connected LCU client (or null), shared with the game recorder (spec 008). */
+let currentLcuClient: LcuClient | null = null
 let currentSession: ChampSelectSession = inactiveSession(new Date().toISOString())
 /** Current Elo for ban recommendations — LCU-resolved (FR-008) or the default (FR-009). */
 let currentElo: CurrentElo = { tier: DEFAULT_ELO_TIER, resolved: false }
@@ -117,6 +123,7 @@ function wireLcuClient(client: LcuClient): void {
     console.log('LCU: Disconnected — will attempt to reconnect')
     lcuStopPolling?.()
     lcuStopPolling = null
+    currentLcuClient = null // the recorder pauses until a client reconnects (spec 008)
     currentSession = { ...currentSession, active: false }
     persistSnapshot()
     pushUpdates()
@@ -153,7 +160,12 @@ async function connectLcu(): Promise<void> {
   }
 
   console.log('LCU: Connected to League Client')
-  void resolveCurrentElo(client) // spec 007 FR-008 — current ranked tier for bans
+  currentLcuClient = client // hand the live client to the game recorder (spec 008)
+  // Resolve the ranked tier before the catch-up capture so games recorded for sessions
+  // played while the app was closed are stamped with the player's actual Elo, not the
+  // default (spec 007 FR-008 for bans + spec 008 edge case "capture on restart").
+  await resolveCurrentElo(client)
+  void gameRecorder?.capture()
   const initial = await client.getChampSelectSession()
   if (initial) {
     console.log('LCU: Initial session detected:', { active: initial.active, phase: initial.phase })
@@ -175,6 +187,7 @@ function wireServices(database: DB): void {
   const stats = new StatsRepository(database)
   const synergy = new SynergyRepository(database)
   const banStats = new BanStatsRepository(database)
+  const gameRecords = new GameRecordsRepository(database)
   snapshotRepository = new SnapshotRepository(database)
 
   // Initial Elo for bans: the last LCU-resolved tier persisted across launches, or
@@ -199,6 +212,12 @@ function wireServices(database: DB): void {
 
   recommendationService = new RecommendationService(pool, stats, synergy, settings, () => currentSession)
   banRecommendationService = new BanRecommendationService(banStats, settings, () => currentElo)
+  const gameAnalyticsService = new GameAnalyticsService(
+    gameRecords,
+    champions,
+    settings,
+    () => currentElo
+  )
 
   registerIpcHandlers({
     pool,
@@ -206,7 +225,8 @@ function wireServices(database: DB): void {
     settings,
     getRecommendation: () => recommendationService!.getRecommendation(),
     getChampSelectStatus: () => currentSession,
-    getBanRecommendations: (elo) => banRecommendationService!.get(elo)
+    getBanRecommendations: (elo) => banRecommendationService!.get(elo),
+    getCounters: (filter) => gameAnalyticsService.getCounters(filter)
   })
 
   // Background stats refresh (research.md §1). Live win rates come from lolalytics'
@@ -247,6 +267,19 @@ function wireServices(database: DB): void {
     getCurrentElo: () => currentElo.tier,
     idToKey,
     onRefreshed: pushBanUpdates
+  })
+
+  // Background game-outcome recorder (spec 008 US1). Captures completed games from LCU
+  // match history on a 5-minute poll and on connect; non-blocking and read-only. Each
+  // new game is pushed to the renderer so an open Personal Counters view refreshes.
+  gameRecorder = startGameRecorder({
+    gameRecords,
+    settings,
+    idToKey,
+    getClient: () => currentLcuClient,
+    getCurrentElo: () => currentElo.tier,
+    getAssignedRole: () => currentSession.assignedRole,
+    onRecorded: (event) => broadcast(IPC.GAME_RECORD_OUTCOME, event)
   })
 
   void connectLcu()
@@ -323,6 +356,8 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     banRefresh?.stop()
     banRefresh = null
+    gameRecorder?.stop()
+    gameRecorder = null
     db?.close()
     db = null
     app.quit()

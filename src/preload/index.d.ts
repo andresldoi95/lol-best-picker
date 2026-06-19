@@ -3,8 +3,11 @@ import type {
   BanRecommendationSet,
   ChampSelectSession,
   ChampionSummary,
+  CounterFilter,
   EloTier,
+  GameRecordedEvent,
   Language,
+  PersonalCounterSet,
   PoolEntryView,
   Recommendation,
   Role
@@ -40,6 +43,10 @@ export interface Api {
   ban: {
     fetchRecommendations(elo?: EloTier): Promise<BanRecommendationSet>
     onUpdate(callback: (bans: BanRecommendationSet) => void): UnsubscribeFn
+  }
+  game: {
+    fetchCounters(filter?: CounterFilter): Promise<PersonalCounterSet>
+    onRecordOutcome(callback: (event: GameRecordedEvent) => void): UnsubscribeFn
   }
 }
 

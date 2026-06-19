@@ -115,6 +115,11 @@ export interface AppSettings {
   /** Last ranked tier resolved from the LCU (FR-008); null = never resolved → the
    *  app falls back to {@link DEFAULT_ELO_TIER} (FR-009). */
   currentEloTier: EloTier | null
+  /** ISO-8601 timestamp of the last successful game-record capture cycle; null =
+   *  never captured → counters view reads "stale" (spec 008). */
+  lastGameRecordFetchAt: string | null
+  /** Lowercase EloTier slug at the last capture cycle; null = never captured (spec 008). */
+  lastGameRecordTier: EloTier | null
 }
 
 export type ChampSelectPhase = 'NONE' | 'BAN_PICK' | 'FINALIZATION'
@@ -226,4 +231,107 @@ export interface BanRecommendationSet {
   freshness: Freshness
   /** ISO-8601 — drives the freshness "last updated" indicator (US3). */
   lastUpdatedAt: string
+}
+
+/** Outcome of a single game, from the player's perspective (spec 008). */
+export type GameResult = 'win' | 'loss'
+
+/**
+ * Sample-size confidence label for a personal counter (spec 008 US4 / FR-007). Keeps
+ * low-sample outliers (a 0% win rate in 1 game) from reading as authoritative threats.
+ *  - `'Potential'` — 1–2 games   · `'Likely'` — 3–9 games   · `'Confirmed'` — 10+ games
+ */
+export type ConfidenceTier = 'Potential' | 'Likely' | 'Confirmed'
+
+/**
+ * One completed game captured from LCU match history (spec 008 US1 / FR-001). Champion
+ * fields are Data Dragon keys; `allied`/`enemy` exclude the player (stored separately).
+ * Independent of the champion pool — a counter can be a champion the player doesn't own.
+ */
+export interface GameRecord {
+  id: number
+  /** Unix epoch ms when the game ended. Unique — dedupes re-captures. */
+  timestamp: number
+  /** The player's own champion (key). */
+  playerChampion: string
+  /** Champion-select role (authoritative, FR-010). */
+  playerRole: Role
+  /** The 4 ally champion keys (excludes the player), sorted. */
+  alliedChampions: string[]
+  /** The 5 enemy champion keys, sorted. */
+  enemyChampions: string[]
+  result: GameResult
+  /** Normalized ranked tier at game time (lowercase EloTier slug). */
+  playerTier: EloTier
+  /** Unix epoch ms the row was inserted (auditing). */
+  createdAt: number
+}
+
+/** A game record before persistence — no DB-assigned `id`/`createdAt` yet. */
+export type NewGameRecord = Omit<GameRecord, 'id' | 'createdAt'>
+
+/**
+ * An opponent champion the player faces, scored as a personal threat (spec 008 US2).
+ * Derived by aggregating {@link GameRecord}s — NOT from official stats — so a champion
+ * with an average public win rate can still be this player's worst counter.
+ */
+export interface PersonalCounter {
+  /** Opponent champion key, e.g. "Ahri". */
+  opponentChampion: string
+  championName: string
+  iconPath: string
+  /** Role the counts are scoped to; `null` = aggregated across all roles (FR-006). */
+  playerRole: Role | null
+  gamesPlayed: number
+  wins: number
+  /** Personal win rate vs. this opponent, 0–100 (FR-003). */
+  winRate: number
+  /** Threat score = (50 − winRate) × min(1, gamesPlayed/5) (FR-004). Higher = worse. */
+  threatScore: number
+  confidenceTier: ConfidenceTier
+  /** Unix epoch ms of the most recent game vs. this opponent. */
+  lastEncountered: number
+}
+
+/**
+ * Full personal-counters payload returned over `game:fetch-counters` (spec 008 US2).
+ * Counter data is scoped to the player's current tier; `otherTierGames` surfaces how
+ * many recorded games fall in *other* tiers so the UI can show the historical-context
+ * badge (clarification Q1 / FR edge case), while keeping the i18n string in the renderer.
+ */
+export interface PersonalCounterSet {
+  /** Ranked best→worst (highest threat first); empty = no games (FR-009 empty state). */
+  counters: PersonalCounter[]
+  /** Role filter applied; `null` = all roles. */
+  role: Role | null
+  /** Tier the counters were computed for. */
+  eloTier: EloTier
+  /** True when `eloTier` came from the LCU; false when it's the default fallback. */
+  eloResolved: boolean
+  /** Total games recorded across all tiers (drives empty-state context). */
+  totalGamesRecorded: number
+  /** Games recorded at `eloTier` (the ones the counters are computed from). */
+  gamesInTier: number
+  /** Games recorded at other tiers (historical-context badge). */
+  otherTierGames: number
+  freshness: Freshness
+  /** ISO-8601 — drives the "last updated" indicator (mirrors bans US3). */
+  lastUpdatedAt: string
+}
+
+/** Optional filter for `game:fetch-counters`. Omitted fields fall back to the
+ *  player's current role-agnostic / current-tier defaults resolved in main. */
+export interface CounterFilter {
+  role?: Role | null
+  tier?: EloTier | null
+}
+
+/** Pushed to the renderer after a new game is captured (spec 008, `game:record-outcome`),
+ *  so an open Personal Counters view can refresh live. */
+export interface GameRecordedEvent {
+  championKey: string
+  role: Role
+  result: GameResult
+  timestamp: number
+  tier: EloTier
 }

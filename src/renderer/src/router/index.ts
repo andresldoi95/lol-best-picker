@@ -2,6 +2,7 @@ import { createRouter, createWebHashHistory, type RouteRecordRaw } from 'vue-rou
 import PoolManagementView from '@renderer/pages/PoolManagementView.vue'
 import ChampSelectView from '@renderer/pages/ChampSelectView.vue'
 import BanRecommendationsView from '@renderer/pages/BanRecommendationsView.vue'
+import PersonalCountersView from '@renderer/pages/PersonalCountersView.vue'
 import SettingsView from '@renderer/pages/SettingsView.vue'
 
 // Hash history avoids file:// path issues when the renderer is loaded from disk
@@ -15,6 +16,12 @@ const routes: RouteRecordRaw[] = [
     meta: { title: 'Champion Select' }
   },
   { path: '/bans', name: 'bans', component: BanRecommendationsView, meta: { title: 'Recommended Bans' } },
+  {
+    path: '/counters',
+    name: 'counters',
+    component: PersonalCountersView,
+    meta: { title: 'Personal Counters' }
+  },
   { path: '/settings', name: 'settings', component: SettingsView, meta: { title: 'Settings' } }
 ]
 
