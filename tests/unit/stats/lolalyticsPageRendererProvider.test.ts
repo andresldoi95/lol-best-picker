@@ -90,3 +90,72 @@ describe('parseSynergyDom', () => {
     expect(rows.map((r) => r.allyChampionKey)).not.toContain('Ahri')
   })
 })
+
+/**
+ * Regression fixture for the live DOM captured from lolalytics (the shape the
+ * original hand-written fixture missed). The real synergy section is:
+ *  - anchored by a `data-type="…_synergy"` tab marker (NOT a loose "Synergy"/"with"
+ *    word, which appears in chrome ~90k chars earlier);
+ *  - each ally renders as THREE portrait chunks — a "+" page-champion icon, a prose
+ *    tooltip ("X wins NN.NN% … with Y …"), and the numeric row
+ *    ("53.07 0.58 -0.54 4.72 5,476") — where win rate is the first number and games
+ *    the last whole-number token (deltas carry decimals, games do not, and there's
+ *    no `%` on the numeric row);
+ *  - followed by a Counters section whose rows must never surface as synergy.
+ */
+function buildRealHtml(): string {
+  const img = (slug: string): string =>
+    `<img srcset="https://cdn5.lolalytics.com/champx46/${slug}.webp 35w, https://cdn5.lolalytics.com/champx92/${slug}.webp 70w" src="https://cdn5.lolalytics.com/champx46/${slug}.webp" alt="${slug}">`
+  return `<html><body>
+    <div data-type="common_synergy">Common Teammates</div>
+    <div data-type="good_synergy">Good Synergy</div>
+    <div class="rows">
+      <div>${img('ashe')}<span>+</span></div>
+      <div>${img('garen')}<span>Garen The Might of Demacia Ashe wins 53.07% of the time with Garen which is 0.58% more than expected</span></div>
+      <div>${img('garen')}<span>53.07 0.58 -0.54 4.72 5,476</span></div>
+      <div>${img('malphite')}<span>52.88 0.51 -0.49 3.64 4,219</span></div>
+      <div>${img('leesin')}<span>51.00 0.10 -0.10 1.00 42</span></div>
+    </div>
+    <div data-section="counters"><h3>Counters</h3>
+      <div>${img('syndra')}<span>95.00 9.00 -8.00 7.00 9,000</span></div>
+    </div>
+  </body></html>`
+}
+
+const realSlugToKey = new Map<string, string>([
+  ['ashe', 'Ashe'],
+  ['garen', 'Garen'],
+  ['malphite', 'Malphite'],
+  ['leesin', 'LeeSin'],
+  ['syndra', 'Syndra']
+])
+
+describe('parseSynergyDom — live lolalytics DOM shape', () => {
+  const rows = parseSynergyDom(buildRealHtml(), realSlugToKey, 'Ashe', 'BOTTOM', '16.12', 100)
+
+  it('reads win rate (first number) and games (last whole number) from the numeric row', () => {
+    expect(rows.find((r) => r.allyChampionKey === 'Garen')).toMatchObject({
+      championKey: 'Ashe',
+      role: 'BOTTOM',
+      allyChampionKey: 'Garen',
+      winRate: 53.07,
+      gamesPlayed: 5476,
+      source: 'rendered'
+    })
+    expect(rows.find((r) => r.allyChampionKey === 'Malphite')).toMatchObject({
+      winRate: 52.88,
+      gamesPlayed: 4219
+    })
+  })
+
+  it('dedupes the tooltip/“+” chunks so each ally appears once', () => {
+    expect(rows.filter((r) => r.allyChampionKey === 'Garen')).toHaveLength(1)
+  })
+
+  it('excludes the page champion, sub-minGames allies, and the counters section', () => {
+    const allies = rows.map((r) => r.allyChampionKey)
+    expect(allies).not.toContain('Ashe') // self ("+") chunk
+    expect(allies).not.toContain('LeeSin') // 42 games < 100
+    expect(allies).not.toContain('Syndra') // counters section, out of region
+  })
+})

@@ -19,13 +19,19 @@ import type {
 } from './synergyProvider'
 
 /**
- * Section boundary markers. Once the synergy section is located by label, the
- * region extends until the next *other* section heading so sibling tables
- * (counters / matchups / bans) can never leak their high win-rate rows into the
- * synergy result — the same "target by label" guarantee `parseSynergyHtml`
- * relies on in `lolalyticsMatchupProvider.ts`.
+ * Section boundary markers. Once the synergy section is located, the region
+ * extends until the next *other* section heading so sibling tables (counters /
+ * matchups / bans) can never leak their high win-rate rows into the synergy
+ * result — the same "target by label" guarantee `parseSynergyHtml` relies on in
+ * `lolalyticsMatchupProvider.ts`.
+ *
+ * SYNERGY_LABEL anchors on the synergy section *specifically*: a
+ * `data-type="…_synergy"` tab marker or the `>Synergy<` heading. It must NOT
+ * match loose words like "with"/"duo" — those occur in page chrome ~90k chars
+ * before the real table, so the region anchored there and missed every row (the
+ * live-capture bug that left synergy permanently "estimated").
  */
-const SYNERGY_LABEL = /synergy|teammate|duo|\bwith\b/i
+const SYNERGY_LABEL = /data-type="(?:common|good|bad|delta)_synergy"|>\s*synergy\s*</i
 const SECTION_BOUNDARY =
   /counters?|matchups?|weak\s+against|strong\s+against|best\s+(?:picks?|with)|worst|bans?\b/i
 
@@ -64,10 +70,15 @@ interface ParsedSynergyTableRow {
 }
 
 /**
- * Parse one synergy row chunk: portrait slug + win rate + games. Column order on
- * lolalytics is portrait | name | WR% | games, so games is read as the first
- * number *after* the win rate (a leading rank number is thus ignored). Returns
- * null when the chunk lacks a recognised champion image or a win rate.
+ * Parse one synergy row chunk: portrait slug + win rate + games. The live row
+ * renders as a run of numbers — `<winRate> <Δ> <Δ> <Δ> <games>` (e.g.
+ * "53.07 0.58 -0.54 4.72 5,476") — where the win rate is the FIRST number and the
+ * games count is the last *whole-number* token (the deltas always carry a decimal
+ * point; the games count never does). This also covers the simpler "WR% games"
+ * shape. Returns null when the chunk lacks a recognised champion image or any
+ * number. The non-numeric tooltip chunk that precedes each row yields no integer
+ * games token, so it falls below `minGames` and is dropped in favour of the
+ * numeric row (dedup by ally key).
  */
 function parseRow(chunk: string, slugToKey: Map<string, string>): ParsedSynergyTableRow | null {
   const src = chunk.match(/<img\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/i)
@@ -75,14 +86,13 @@ function parseRow(chunk: string, slugToKey: Map<string, string>): ParsedSynergyT
   const slug = resolveSlug(src[1], slugToKey)
   if (!slug) return null
 
-  const text = visibleText(chunk)
-  const wr = text.match(/(\d+(?:\.\d+)?)\s*%/)
-  if (!wr) return null
-  const winRate = parseFloat(wr[1])
+  const tokens = visibleText(chunk).match(/\d[\d,]*(?:\.\d+)?/g)
+  if (!tokens || tokens.length === 0) return null
 
-  const afterWr = text.slice((wr.index ?? 0) + wr[0].length)
-  const gamesMatch = afterWr.match(/(\d[\d,]*)/)
-  const games = gamesMatch ? parseInt(gamesMatch[1].replace(/,/g, ''), 10) : 0
+  const winRate = parseFloat(tokens[0].replace(/,/g, ''))
+  if (Number.isNaN(winRate)) return null
+  const gamesToken = [...tokens].reverse().find((token) => !token.includes('.'))
+  const games = gamesToken ? parseInt(gamesToken.replace(/,/g, ''), 10) : 0
 
   return { slug, winRate, games }
 }
@@ -213,7 +223,8 @@ export class LolalyticsPageRendererProvider implements BuildStatsProvider, Syner
   constructor(options: LolalyticsPageRendererOptions) {
     this.wrapped = new LolalyticsMatchupProvider(options)
     this.slugToKey = options.slugToKey
-    this.renderTimeoutMs = options.renderTimeoutMs ?? 5000
+    // Click → lazy fetch → render takes ~2s on a warm page; 8s leaves margin.
+    this.renderTimeoutMs = options.renderTimeoutMs ?? 8000
     this.pollIntervalMs = options.pollIntervalMs ?? 250
     this.tier = options.tier ?? 'emerald'
     this.minGames = options.minGames ?? 100
@@ -311,7 +322,17 @@ export class LolalyticsPageRendererProvider implements BuildStatsProvider, Syner
 
     const deadline = Date.now() + this.renderTimeoutMs
     let lastHtmlLen = 0
+    let lastTriggerAt = 0
     while (Date.now() < deadline) {
+      // The ally-synergy rows are NOT in the server HTML — lolalytics lazy-loads
+      // them only after a synergy tab is clicked (Qwik on:click). Trigger that
+      // click (debounced; re-tried in case the first fires before hydration),
+      // then poll the DOM until parseSynergyDom sees the rows.
+      if (Date.now() - lastTriggerAt > 1500) {
+        await this.triggerSynergyTab(win)
+        lastTriggerAt = Date.now()
+      }
+
       let html = ''
       try {
         html = (await win.webContents.executeJavaScript(
@@ -342,6 +363,28 @@ export class LolalyticsPageRendererProvider implements BuildStatsProvider, Syner
       `[synergy] ${target.championKey}/${target.role}: timed out after ${this.renderTimeoutMs}ms (last HTML ${lastHtmlLen} chars, 0 rows parsed)`
     )
     return []
+  }
+
+  /**
+   * Click the synergy tab to trigger its lazy data load (the rows are absent from
+   * the server HTML until then). Best-effort: a not-yet-hydrated page throws and
+   * the caller simply retries on the next poll. `scrollIntoView` first, then a
+   * real `click()` that Qwik resumes the `on:click` handler from.
+   */
+  private async triggerSynergyTab(win: BrowserWindowInstance): Promise<void> {
+    try {
+      await win.webContents.executeJavaScript(`(() => {
+        const el = document.querySelector('[data-type="common_synergy"]')
+          || document.querySelector('[data-type="good_synergy"]')
+          || document.querySelector('[data-type="bad_synergy"]');
+        if (!el) return false;
+        el.scrollIntoView();
+        el.click();
+        return true;
+      })()`)
+    } catch {
+      // Page not hydrated yet — retried on the next poll.
+    }
   }
 
   /**
