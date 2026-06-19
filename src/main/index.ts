@@ -2,29 +2,37 @@ import { app, BrowserWindow, session } from 'electron'
 import { join } from 'node:path'
 import { createDatabase, type DB } from './db'
 import { seedChampions } from './dataDragon/championRepository'
-import { seedChampionStats } from './stats/seedData'
+import { seedChampionStats, seedBanStats } from './stats/seedData'
 import { PoolRepository } from './db/repositories/poolRepository'
 import { ChampionsRepository } from './db/repositories/championsRepository'
 import { SettingsRepository } from './db/repositories/settingsRepository'
 import { StatsRepository } from './db/repositories/statsRepository'
 import { SynergyRepository } from './db/repositories/synergyRepository'
+import { BanStatsRepository } from './db/repositories/banStatsRepository'
 import { SnapshotRepository } from './db/repositories/snapshotRepository'
 import { RecommendationService } from './recommendationService'
+import { BanRecommendationService, type CurrentElo } from './banRecommendationService'
 import { registerIpcHandlers } from './ipc/handlers'
 import { createLcuAdapter, type LcuClient } from './lcu/champSelectAdapter'
 import { inactiveSession } from './lcu/normalize'
 import { LolalyticsStatsProvider } from './stats/lolalyticsStatsProvider'
 import { LolalyticsPageRendererProvider } from './stats/lolalyticsPageRendererProvider'
 import { startStatsRefresh } from './stats'
+import { startBanStatsRefresh } from './stats/banStatsProvider'
 import { initializeInstallerConfig } from './installer'
 import { IPC } from '@shared/ipcChannels'
-import type { ChampSelectSession } from '@shared/types'
+import { DEFAULT_ELO_TIER, type ChampSelectSession } from '@shared/types'
 
 let db: DB | null = null
 let mainWindow: BrowserWindow | null = null
 let recommendationService: RecommendationService | null = null
+let banRecommendationService: BanRecommendationService | null = null
+let settingsRepository: SettingsRepository | null = null
 let snapshotRepository: SnapshotRepository | null = null
+let banRefresh: { stop: () => void; refresh: () => Promise<boolean> } | null = null
 let currentSession: ChampSelectSession = inactiveSession(new Date().toISOString())
+/** Current Elo for ban recommendations — LCU-resolved (FR-008) or the default (FR-009). */
+let currentElo: CurrentElo = { tier: DEFAULT_ELO_TIER, resolved: false }
 
 export function getDb(): DB {
   if (!db) throw new Error('Database has not been initialized yet')
@@ -37,6 +45,7 @@ function initDatabase(): DB {
   const database = createDatabase(dbPath)
   seedChampions(database) // T009 — Data Dragon champion metadata
   seedChampionStats(database) // T010 — baseline win-rate stats (SC-006 offline-first)
+  seedBanStats(database) // spec 007 T019 — baseline ban stats (SC-001 offline-first)
   initLanguageFromOsLocale(database) // spec 003 US3 — first-launch default
   return database
 }
@@ -59,6 +68,15 @@ function pushUpdates(): void {
   broadcast(IPC.CHAMP_SELECT_SESSION_UPDATED, currentSession)
   if (recommendationService) {
     broadcast(IPC.RECOMMENDATION_UPDATED, recommendationService.getRecommendation())
+  }
+}
+
+/** Push fresh ban recommendations to the renderer (spec 007 US1/US3). Fired on a
+ *  ban-stats refresh and when the LCU resolves a (new) ranked tier — not on every
+ *  champ-select poll, since bans don't depend on the session. */
+function pushBanUpdates(): void {
+  if (banRecommendationService) {
+    broadcast(IPC.BAN_STATS_UPDATED, banRecommendationService.get(null))
   }
 }
 
@@ -106,6 +124,24 @@ function wireLcuClient(client: LcuClient): void {
   })
 }
 
+/** Resolve the player's ranked tier from the LCU (FR-008) and apply it to the ban
+ *  pipeline. Unranked/unavailable keeps the current (default or last-known) tier
+ *  (FR-009). A *new* tier triggers an immediate ban refetch so the right Elo's bans
+ *  load without waiting for the 24h interval. Read-only LCU access (Principle II). */
+async function resolveCurrentElo(client: LcuClient): Promise<void> {
+  try {
+    const tier = await client.getCurrentRankedTier()
+    if (!tier) return
+    const changed = tier !== currentElo.tier
+    currentElo = { tier, resolved: true }
+    settingsRepository?.setCurrentEloTier(tier)
+    if (changed) void banRefresh?.refresh()
+    pushBanUpdates() // reflect the resolved tier/flag even when the data is unchanged
+  } catch (err) {
+    console.warn('LCU: ranked tier lookup failed:', (err as Error).message)
+  }
+}
+
 async function connectLcu(): Promise<void> {
   const adapter = createLcuAdapter()
   const client = await adapter.connect()
@@ -117,6 +153,7 @@ async function connectLcu(): Promise<void> {
   }
 
   console.log('LCU: Connected to League Client')
+  void resolveCurrentElo(client) // spec 007 FR-008 — current ranked tier for bans
   const initial = await client.getChampSelectSession()
   if (initial) {
     console.log('LCU: Initial session detected:', { active: initial.active, phase: initial.phase })
@@ -134,9 +171,18 @@ function wireServices(database: DB): void {
   const pool = new PoolRepository(database)
   const champions = new ChampionsRepository(database)
   const settings = new SettingsRepository(database)
+  settingsRepository = settings
   const stats = new StatsRepository(database)
   const synergy = new SynergyRepository(database)
+  const banStats = new BanStatsRepository(database)
   snapshotRepository = new SnapshotRepository(database)
+
+  // Initial Elo for bans: the last LCU-resolved tier persisted across launches, or
+  // the default fallback until the live client reports one (FR-008/FR-009).
+  const persistedElo = settings.get().currentEloTier
+  currentElo = persistedElo
+    ? { tier: persistedElo, resolved: true }
+    : { tier: DEFAULT_ELO_TIER, resolved: false }
 
   // Hydrate the initial session from the last-known snapshot so a recommendation
   // can render immediately on launch, before/without a live LCU connection (US3 AC3).
@@ -152,13 +198,15 @@ function wireServices(database: DB): void {
   }
 
   recommendationService = new RecommendationService(pool, stats, synergy, settings, () => currentSession)
+  banRecommendationService = new BanRecommendationService(banStats, settings, () => currentElo)
 
   registerIpcHandlers({
     pool,
     champions,
     settings,
     getRecommendation: () => recommendationService!.getRecommendation(),
-    getChampSelectStatus: () => currentSession
+    getChampSelectStatus: () => currentSession,
+    getBanRecommendations: (elo) => banRecommendationService!.get(elo)
   })
 
   // Background stats refresh (research.md §1). Live win rates come from lolalytics'
@@ -187,6 +235,18 @@ function wireServices(database: DB): void {
     synergy,
     getSynergyTargets: () => pool.list().map((entry) => ({ championKey: entry.key, role: entry.role })),
     onRefreshed: pushUpdates
+  })
+
+  // Background ban-stats refresh (spec 007 T010/T018). Fetches the current Elo's
+  // tier-list win rates from lolalytics (reusing the pick scraper), falling back to
+  // the bundled/cached rows on failure. `refresh` is re-triggered when the LCU
+  // resolves a new ranked tier (see resolveCurrentElo).
+  banRefresh = startBanStatsRefresh({
+    banStats,
+    settings,
+    getCurrentElo: () => currentElo.tier,
+    idToKey,
+    onRefreshed: pushBanUpdates
   })
 
   void connectLcu()
@@ -261,6 +321,8 @@ void app.whenReady().then(() => {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
+    banRefresh?.stop()
+    banRefresh = null
     db?.close()
     db = null
     app.quit()

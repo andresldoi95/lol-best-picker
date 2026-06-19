@@ -47,6 +47,7 @@ describe('lolalytics tier-list parsing (Qwik payload decode)', () => {
       role: 'JUNGLE',
       opponentChampionKey: null,
       winRate: 53.5,
+      pickRate: 5.0, // captured for ban ranking (spec 007 threat score)
       gamesPlayed: 1000,
       patch: '16.12'
     })

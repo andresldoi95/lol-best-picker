@@ -123,11 +123,16 @@ export function parseTierlistHtml(
     if (!Number.isFinite(winRate) || winRate <= 0) continue
     if (Number.isFinite(gamesPlayed) && gamesPlayed < minGames) continue
 
+    // Pick rate (presence) — carried for ban ranking; null if absent/malformed.
+    const pickRateRaw = Number(resolve(stat.pr))
+    const pickRate = Number.isFinite(pickRateRaw) ? Math.max(0, Math.min(100, pickRateRaw)) : null
+
     rows.push({
       championKey,
       role,
       opponentChampionKey: null,
       winRate: Math.max(0, Math.min(100, winRate)),
+      pickRate,
       gamesPlayed: Number.isFinite(gamesPlayed) ? Math.floor(gamesPlayed) : 0,
       patch
     })

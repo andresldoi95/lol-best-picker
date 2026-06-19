@@ -1,6 +1,13 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
 import { IPC, INVOKE_CHANNELS, EVENT_CHANNELS, type IpcChannel } from '@shared/ipcChannels'
-import type { Recommendation, ChampSelectSession, Role, Language } from '@shared/types'
+import type {
+  Recommendation,
+  ChampSelectSession,
+  Role,
+  Language,
+  BanRecommendationSet,
+  EloTier
+} from '@shared/types'
 
 /** Whitelisted request/response invoke — rejects any non-allowlisted channel. */
 function invoke<T>(channel: IpcChannel, ...args: unknown[]): Promise<T> {
@@ -48,6 +55,14 @@ const api = {
     setStatsFreshnessHours: (hours: number) =>
       invoke<void>(IPC.SETTINGS_SET_STATS_FRESHNESS_HOURS, hours),
     setLanguage: (language: Language) => invoke<void>(IPC.SETTINGS_SET_LANGUAGE, language)
+  },
+  ban: {
+    /** Fetch role-segmented ban recommendations. Omit `elo` to use the app's
+     *  current (LCU-resolved or default) tier (spec 007 US1). */
+    fetchRecommendations: (elo?: EloTier) =>
+      invoke<BanRecommendationSet>(IPC.BAN_FETCH_RECOMMENDATIONS, elo ?? null),
+    onUpdate: (callback: (bans: BanRecommendationSet) => void) =>
+      subscribe<BanRecommendationSet>(IPC.BAN_STATS_UPDATED, callback)
   }
 }
 

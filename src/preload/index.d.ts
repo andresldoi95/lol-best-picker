@@ -1,7 +1,9 @@
 import type {
   AppSettings,
+  BanRecommendationSet,
   ChampSelectSession,
   ChampionSummary,
+  EloTier,
   Language,
   PoolEntryView,
   Recommendation,
@@ -34,6 +36,10 @@ export interface Api {
     setManualRole(role: Role | null): Promise<void>
     setStatsFreshnessHours(hours: number): Promise<void>
     setLanguage(language: Language): Promise<void>
+  }
+  ban: {
+    fetchRecommendations(elo?: EloTier): Promise<BanRecommendationSet>
+    onUpdate(callback: (bans: BanRecommendationSet) => void): UnsubscribeFn
   }
 }
 

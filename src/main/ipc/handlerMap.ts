@@ -1,5 +1,12 @@
 import { IPC } from '@shared/ipcChannels'
-import type { ChampSelectSession, Language, Recommendation, Role } from '@shared/types'
+import type {
+  BanRecommendationSet,
+  ChampSelectSession,
+  EloTier,
+  Language,
+  Recommendation,
+  Role
+} from '@shared/types'
 import type { PoolRepository } from '../db/repositories/poolRepository'
 import type { ChampionsRepository } from '../db/repositories/championsRepository'
 import type { SettingsRepository } from '../db/repositories/settingsRepository'
@@ -17,6 +24,8 @@ export interface IpcDependencies {
   getRecommendation: () => Recommendation
   /** Current champ-select status (live LCU, or snapshot fallback). */
   getChampSelectStatus: () => ChampSelectSession
+  /** Computes role-segmented ban recommendations for `elo` (null → current Elo, spec 007). */
+  getBanRecommendations: (elo: EloTier | null) => BanRecommendationSet
 }
 
 // The IPC boundary is inherently dynamic — args are erased across the contextBridge.
@@ -51,6 +60,10 @@ export function createHandlerMap(deps: IpcDependencies): IpcHandlerMap {
       deps.settings.setStatsFreshnessHours(hours),
 
     // Settings — language (spec 003 US2)
-    [IPC.SETTINGS_SET_LANGUAGE]: (language: Language) => deps.settings.setLanguage(language)
+    [IPC.SETTINGS_SET_LANGUAGE]: (language: Language) => deps.settings.setLanguage(language),
+
+    // Ban recommendations (spec 007 US1). `elo` omitted/null → main's current Elo.
+    [IPC.BAN_FETCH_RECOMMENDATIONS]: (elo?: EloTier | null) =>
+      deps.getBanRecommendations(elo ?? null)
   }
 }

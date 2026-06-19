@@ -19,6 +19,45 @@ export function isRole(value: unknown): value is Role {
   return typeof value === 'string' && (ROLES as readonly string[]).includes(value)
 }
 
+/** Ranked tiers used for ban statistics, matching lolalytics' `&tier=` slugs
+ *  (spec 007). `'all'` = the all-ranks aggregate, used as the FR-009 fallback when
+ *  the player's ranked tier can't be resolved from the LCU. */
+export type EloTier =
+  | 'all'
+  | 'iron'
+  | 'bronze'
+  | 'silver'
+  | 'gold'
+  | 'platinum'
+  | 'emerald'
+  | 'diamond'
+  | 'master'
+  | 'grandmaster'
+  | 'challenger'
+
+/** All Elo tiers, lowest → highest (the `'all'` aggregate first). */
+export const ELO_TIERS: readonly EloTier[] = [
+  'all',
+  'iron',
+  'bronze',
+  'silver',
+  'gold',
+  'platinum',
+  'emerald',
+  'diamond',
+  'master',
+  'grandmaster',
+  'challenger'
+]
+
+export function isEloTier(value: unknown): value is EloTier {
+  return typeof value === 'string' && (ELO_TIERS as readonly string[]).includes(value)
+}
+
+/** Default Elo tier when the player's ranked tier is unknown (FR-009). Matches
+ *  lolalytics' own default bucket and the bundled seed-stats tier. */
+export const DEFAULT_ELO_TIER: EloTier = 'emerald'
+
 /** Static champion identity/metadata (from Data Dragon, cached in SQLite). */
 export interface ChampionSummary {
   championId: number
@@ -69,6 +108,13 @@ export interface AppSettings {
   lastSynergyFetchAt: string | null
   /** Outcome of the last synergy render attempt; null = never attempted (spec 004). */
   lastSynergyFetchStatus: SynergyFetchStatus | null
+  /** ISO-8601 timestamp of the last ban-stats fetch; null = never attempted (spec 007). */
+  lastBanStatsFetchAt: string | null
+  /** Outcome of the last ban-stats fetch; null = never attempted (spec 007). */
+  lastBanStatsFetchStatus: FetchStatus | null
+  /** Last ranked tier resolved from the LCU (FR-008); null = never resolved → the
+   *  app falls back to {@link DEFAULT_ELO_TIER} (FR-009). */
+  currentEloTier: EloTier | null
 }
 
 export type ChampSelectPhase = 'NONE' | 'BAN_PICK' | 'FINALIZATION'
@@ -141,4 +187,43 @@ export interface Recommendation {
   /** Whether the ally-synergy signal came from a live render or the overall-WR
    *  fallback — drives the "Synergy: live / estimated" chip (spec 004 US3). */
   synergySource: SynergySource
+}
+
+/**
+ * A single champion recommended to ban in a given role, ranked by win rate at the
+ * player's Elo (spec 007 US1). Unlike `RecommendationEntry`, bans are NOT
+ * pool-constrained — they span the whole meta (Constitution I is N/A for bans,
+ * plan.md § Constitution Check).
+ */
+export interface BanRecommendation {
+  championId: number
+  championName: string
+  iconPath: string
+  role: Role
+  /** Overall win rate at `eloTier`, e.g. 52.3 (%). */
+  winRate: number
+  /** Pick rate (presence) as a percentage. Real when from live data; an estimate
+   *  derived from games-share when the source omitted it (e.g. bundled seed). */
+  pickRate: number | null
+  /** Ban-priority "threat" score = (winRate − 50) × pickRate (spec 007). Higher =
+   *  more worth banning: a strong champion you'll actually face. Drives ranking. */
+  banScore: number
+  /** 1-based rank within the role (1 = strongest ban). */
+  rank: number
+}
+
+/**
+ * Full ban-recommendation payload returned to / pushed at the renderer (spec 007).
+ * `recommendations` is a flat list spanning all five roles (ranked within each); the
+ * UI groups it by `role`. Freshness mirrors the pick-recommendation pattern (US3).
+ */
+export interface BanRecommendationSet {
+  /** Elo tier the bans were computed for. */
+  eloTier: EloTier
+  /** True when `eloTier` came from the LCU; false when it's the default fallback (FR-009). */
+  eloResolved: boolean
+  recommendations: BanRecommendation[]
+  freshness: Freshness
+  /** ISO-8601 — drives the freshness "last updated" indicator (US3). */
+  lastUpdatedAt: string
 }

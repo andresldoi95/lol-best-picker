@@ -23,7 +23,11 @@ export const IPC = {
   SETTINGS_GET: 'settings:get',
   SETTINGS_SET_MANUAL_ROLE: 'settings:setManualRole',
   SETTINGS_SET_STATS_FRESHNESS_HOURS: 'settings:setStatsFreshnessHours',
-  SETTINGS_SET_LANGUAGE: 'settings:setLanguage'
+  SETTINGS_SET_LANGUAGE: 'settings:setLanguage',
+
+  // Ban recommendations (spec 007)
+  BAN_FETCH_RECOMMENDATIONS: 'ban:fetch-recommendations',
+  BAN_STATS_UPDATED: 'ban:stats-updated'
 } as const
 
 export type IpcChannel = (typeof IPC)[keyof typeof IPC]
@@ -40,11 +44,13 @@ export const INVOKE_CHANNELS: readonly IpcChannel[] = [
   IPC.SETTINGS_GET,
   IPC.SETTINGS_SET_MANUAL_ROLE,
   IPC.SETTINGS_SET_STATS_FRESHNESS_HOURS,
-  IPC.SETTINGS_SET_LANGUAGE
+  IPC.SETTINGS_SET_LANGUAGE,
+  IPC.BAN_FETCH_RECOMMENDATIONS
 ]
 
 /** Push-event channels the renderer may subscribe to (main → renderer). */
 export const EVENT_CHANNELS: readonly IpcChannel[] = [
   IPC.RECOMMENDATION_UPDATED,
-  IPC.CHAMP_SELECT_SESSION_UPDATED
+  IPC.CHAMP_SELECT_SESSION_UPDATED,
+  IPC.BAN_STATS_UPDATED
 ]

@@ -12,6 +12,7 @@ export interface Catalog {
   // App shell / navigation
   navPool: string
   navChampSelect: string
+  navBans: string
   navSettings: string
 
   // Roles (shared across Pool, Champ Select, Settings)
@@ -73,6 +74,17 @@ export interface Catalog {
   settingsStatusUnknown: string
   settingsLanguageTitle: string
   settingsLanguageSubtitle: string
+
+  // Ban Recommendations (spec 007)
+  bansTitle: string
+  bansSubtitle: string
+  bansEloLabel: string
+  bansEloDefault: string
+  bansEmpty: string
+  bansRoleEmpty: string
+  banCardWinRate: string
+  banCardWinRateShort: string
+  banCardPickRate: string
 
   // Freshness Indicator
   freshnessLive: string

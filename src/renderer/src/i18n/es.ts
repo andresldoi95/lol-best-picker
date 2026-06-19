@@ -9,6 +9,7 @@ export const es = {
   // App shell / navigation
   navPool: 'Reserva',
   navChampSelect: 'Selección',
+  navBans: 'Baneos',
   navSettings: 'Ajustes',
 
   // Roles
@@ -77,6 +78,18 @@ export const es = {
   settingsStatusUnknown: 'desconocida',
   settingsLanguageTitle: 'Idioma',
   settingsLanguageSubtitle: 'Elige el idioma de la interfaz de la aplicación.',
+
+  // Ban Recommendations (spec 007)
+  bansTitle: 'Baneos Recomendados',
+  bansSubtitle:
+    'Los campeones más fuertes para banear en cada rol según tu Elo, ordenados por porcentaje de victorias.',
+  bansEloLabel: 'Elo: {elo}',
+  bansEloDefault: 'predeterminado',
+  bansEmpty: 'Aún no hay datos de baneos. Vuelve cuando se hayan cargado las estadísticas.',
+  bansRoleEmpty: 'Sin datos',
+  banCardWinRate: '{wr}% de victorias',
+  banCardWinRateShort: '{wr}% VIC',
+  banCardPickRate: '{pr}% selección',
 
   // Freshness Indicator
   freshnessLive: 'En vivo',

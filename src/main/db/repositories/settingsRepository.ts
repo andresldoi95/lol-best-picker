@@ -1,5 +1,12 @@
 import type { DB } from '../index'
-import type { AppSettings, FetchStatus, Language, Role, SynergyFetchStatus } from '@shared/types'
+import type {
+  AppSettings,
+  EloTier,
+  FetchStatus,
+  Language,
+  Role,
+  SynergyFetchStatus
+} from '@shared/types'
 
 interface SettingsRow {
   stats_freshness_hours: number
@@ -9,6 +16,9 @@ interface SettingsRow {
   language: Language | null
   last_synergy_fetch_at: string | null
   last_synergy_fetch_status: SynergyFetchStatus | null
+  last_ban_stats_fetch_at: string | null
+  last_ban_stats_fetch_status: FetchStatus | null
+  current_elo_tier: EloTier | null
 }
 
 const DEFAULTS: AppSettings = {
@@ -18,7 +28,10 @@ const DEFAULTS: AppSettings = {
   lastStatsFetchStatus: null,
   language: 'en',
   lastSynergyFetchAt: null,
-  lastSynergyFetchStatus: null
+  lastSynergyFetchStatus: null,
+  lastBanStatsFetchAt: null,
+  lastBanStatsFetchStatus: null,
+  currentEloTier: null
 }
 
 /** Read/write the single-row `app_settings` table. */
@@ -29,7 +42,8 @@ export class SettingsRepository {
     const row = this.db
       .prepare(
         `SELECT stats_freshness_hours, manual_role, last_stats_fetch_at, last_stats_fetch_status,
-                language, last_synergy_fetch_at, last_synergy_fetch_status
+                language, last_synergy_fetch_at, last_synergy_fetch_status,
+                last_ban_stats_fetch_at, last_ban_stats_fetch_status, current_elo_tier
          FROM app_settings WHERE id = 1`
       )
       .get() as SettingsRow | undefined
@@ -46,8 +60,18 @@ export class SettingsRepository {
       language: row.language ?? 'en',
       // NULL until the first synergy render attempt completes (spec 004).
       lastSynergyFetchAt: row.last_synergy_fetch_at ?? null,
-      lastSynergyFetchStatus: row.last_synergy_fetch_status ?? null
+      lastSynergyFetchStatus: row.last_synergy_fetch_status ?? null,
+      // NULL until the first ban-stats fetch / LCU tier resolution (spec 007).
+      lastBanStatsFetchAt: row.last_ban_stats_fetch_at ?? null,
+      lastBanStatsFetchStatus: row.last_ban_stats_fetch_status ?? null,
+      currentEloTier: row.current_elo_tier ?? null
     }
+  }
+
+  /** Persist the ranked tier resolved from the LCU (FR-008) so the right tier's
+   *  bans render offline on the next launch. Pass null to clear. */
+  setCurrentEloTier(tier: EloTier | null): void {
+    this.db.prepare('UPDATE app_settings SET current_elo_tier = ? WHERE id = 1').run(tier)
   }
 
   /** Session-level manual role override (FR-007); pass null to clear. */

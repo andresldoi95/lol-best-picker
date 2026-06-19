@@ -5,7 +5,7 @@ import {
   type RawLcuSession
 } from '@main/lcu/normalize'
 import type { LcuAdapter, LcuClient } from '@main/lcu/champSelectAdapter'
-import type { ChampSelectSession } from '@shared/types'
+import type { ChampSelectSession, EloTier } from '@shared/types'
 
 const NOW = '2026-06-14T12:00:00.000Z'
 
@@ -102,6 +102,9 @@ class FixtureLcuClient implements LcuClient {
   }
   isRankedChampSelect(): Promise<boolean> {
     return Promise.resolve(true)
+  }
+  getCurrentRankedTier(): Promise<EloTier | null> {
+    return Promise.resolve('emerald')
   }
   onChampSelectUpdate(handler: (s: ChampSelectSession | null) => void): () => void {
     this.updateHandler = handler
