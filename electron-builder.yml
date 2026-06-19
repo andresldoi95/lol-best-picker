@@ -25,6 +25,26 @@ win:
   artifactName: ${productName}-${version}-setup.${ext}
 
 nsis:
+  # Assisted (multi-page) installer, current-user only — installs under
+  # %LOCALAPPDATA%\Programs and never requires admin rights (spec 005 SC-007).
   oneClick: false
   perMachine: false
+  allowElevation: false
   allowToChangeInstallationDirectory: true
+
+  # Shortcuts (FR-008). The assisted UI exposes the desktop-shortcut checkbox.
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: LoL Best Picker
+  runAfterFinish: true
+
+  # User data (SQLite, .env.local) lives in %LOCALAPPDATA%\LolBestPicker and must
+  # survive upgrade/repair/modify (FR-007). Removal is handled by the custom
+  # uninstall prompt below, never wiped automatically (FR-009).
+  deleteAppDataOnUninstall: false
+
+  # build/installer.nsh is auto-detected from buildResources and injects:
+  #  - an "Environment Configuration" wizard page (FR-002/FR-003),
+  #  - silent-mode /KEY=value parsing (FR-012), and
+  #  - the uninstall "keep or remove my data" prompt (FR-009).
+  # See that file for the customInstall / customUnInstall / page macros.

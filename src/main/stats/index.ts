@@ -43,12 +43,21 @@ export function startStatsRefresh(deps: StatsRefreshDeps): () => void {
   const run = async (): Promise<void> => {
     if (!deps.provider) return // no endpoint configured → rely on bundled/cached stats
     const settings = deps.settings.get()
-    const stale = isStale(settings.lastStatsFetchAt, settings.statsFreshnessHours, Date.now())
+    const now = Date.now()
+    const stale = isStale(settings.lastStatsFetchAt, settings.statsFreshnessHours, now)
     // Backfill pool-scoped matchups even when the overall cache is fresh — otherwise
     // a recent overall-only fetch would block matchups from ever populating until the
     // 24h window elapses (the bug where enemy/ally scores stayed identical).
     const needMatchups = !deps.stats.hasMatchupRows()
-    if (!stale && !needMatchups) return
+    // Likewise, refresh synergy whenever it hasn't successfully rendered or has gone
+    // stale. Synergy freshness is tracked independently (spec 004), so a fresh overall
+    // stats cache must not pin synergy to a failed/empty state for 24h — note a failed
+    // render still stamps last_synergy_fetch_at, so status (not age) is the signal.
+    const needSynergy =
+      !!deps.synergyProvider &&
+      (settings.lastSynergyFetchStatus !== 'rendered' ||
+        isStale(settings.lastSynergyFetchAt, settings.statsFreshnessHours, now))
+    if (!stale && !needMatchups && !needSynergy) return
 
     let changed = false
     if (stale) {

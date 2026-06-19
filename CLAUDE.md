@@ -84,9 +84,25 @@ populate (research.md §3). The `a1.lolalytics.com` endpoint is still never call
 page's own JS calls it when rendered (Constitution II). Synergy freshness is tracked separately
 in `app_settings` (`last_synergy_fetch_*`) and surfaced as a "Synergy: live/estimated" chip.
 
+**Installer / user-level config** (spec 005). `src/main/installer/` is another
+**Electron-free, unit-tested** module (like `src/recommendation/`): `paths.ts`,
+`storage.ts` (`.env.local` parse/serialize), `config.ts` (env-merge precedence +
+validation), `logger.ts`, and `index.ts`'s `initializeInstallerConfig()`. At
+startup `src/main/index.ts` calls it, then `app.setPath('userData', dataDir)` so
+**all user data consolidates under `%LOCALAPPDATA%\LolBestPicker`** (DB, `.env.local`,
+`install.log`) — survives upgrade/repair, no admin needed. Precedence:
+**`.env.local` app overrides > system env > defaults** (FR-005). Packaging uses
+electron-builder's NSIS via `electron-builder.yml` + the auto-detected
+`build/installer.nsh` (custom env-config wizard page, `/S` silent `/KEY=value`
+parsing, uninstall keep/remove-data prompt) — **no hand-written `.nsi`/PowerShell
+runners** (that's not how electron-builder works) and **no new dependency**
+(Constitution VII). `build/` is git-tracked (it's electron-builder's
+buildResources); only `build/Release/` is ignored. Installer *execution* isn't
+Vitest-testable — manual QA lives in [docs/installer-testing-guide.md](docs/installer-testing-guide.md).
+
 ## Active Feature Plan
 
-**Feature**: Live Synergy Data via Browser Rendering
-**Branch**: `004-puppeteer-synergy-render`
-**Plan**: [specs/004-puppeteer-synergy-render/plan.md](specs/004-puppeteer-synergy-render/plan.md)
-**Spec**: [specs/004-puppeteer-synergy-render/spec.md](specs/004-puppeteer-synergy-render/spec.md)
+**Feature**: Windows User-Level Installer
+**Branch**: `005-installer-setup`
+**Plan**: [specs/005-installer-setup/plan.md](specs/005-installer-setup/plan.md)
+**Spec**: [specs/005-installer-setup/spec.md](specs/005-installer-setup/spec.md)

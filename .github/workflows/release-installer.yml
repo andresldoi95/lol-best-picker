@@ -1,0 +1,43 @@
+name: Package Windows Installer
+
+# Builds the NSIS installer (spec 005). Runs only on a version tag push or a
+# manual dispatch — it never runs on ordinary pushes/PRs, so it won't add noise.
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  package:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # better-sqlite3 must be built for Electron's ABI before packaging.
+      - name: Rebuild native modules for Electron
+        run: npm run electron:rebuild
+
+      - name: Package installer
+        run: npm run package
+        # Code signing is intentionally NOT enabled here. To sign releases,
+        # provide a certificate and uncomment the env below (electron-builder
+        # reads these automatically). Without them the installer is unsigned.
+        # env:
+        #   CSC_LINK: ${{ secrets.WINDOWS_CERT_BASE64 }}
+        #   CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lol-best-picker-windows-installer
+          path: release/*setup.exe
+          if-no-files-found: error

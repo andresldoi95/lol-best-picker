@@ -16,6 +16,7 @@ import { inactiveSession } from './lcu/normalize'
 import { LolalyticsStatsProvider } from './stats/lolalyticsStatsProvider'
 import { LolalyticsPageRendererProvider } from './stats/lolalyticsPageRendererProvider'
 import { startStatsRefresh } from './stats'
+import { initializeInstallerConfig } from './installer'
 import { IPC } from '@shared/ipcChannels'
 import type { ChampSelectSession } from '@shared/types'
 
@@ -236,6 +237,16 @@ function createMainWindow(): BrowserWindow {
 }
 
 void app.whenReady().then(() => {
+  // spec 005: consolidate all user data under %LOCALAPPDATA%\LolBestPicker and
+  // apply any installer-provided env overrides (.env.local) to process.env
+  // before anything — the DB path, LCU adapter, stats providers — reads them.
+  const { dataDir, appliedKeys } = initializeInstallerConfig()
+  app.setPath('userData', dataDir)
+  if (appliedKeys.length > 0) {
+    // Names only — never values (Constitution II).
+    console.log(`Installer config: applied ${appliedKeys.length} override(s):`, appliedKeys.join(', '))
+  }
+
   db = initDatabase()
   applyContentSecurityPolicy()
   mainWindow = createMainWindow()

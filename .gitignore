@@ -3,10 +3,12 @@ node_modules/
 
 # Build output
 dist/
-build/
 out/
 release/
 *.tsbuildinfo
+# Note: repo-root build/ is electron-builder's buildResources (installer.nsh,
+# icons) and is intentionally tracked. Native build artifacts are ignored via
+# build/Release/ below.
 
 # Logs
 *.log
