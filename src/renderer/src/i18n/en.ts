@@ -51,6 +51,9 @@ export const en = {
   champSelectSummaryAlly: 'Ally',
   champSelectSynergyLive: 'Synergy: live',
   champSelectSynergyEstimated: 'Synergy: estimated',
+  champSelectInactiveTitle: 'Champion Select Inactive',
+  champSelectInactiveMessage:
+    'Start a League of Legends game to see champion recommendations.',
 
   // Settings
   settingsTitle: 'Settings',

@@ -54,6 +54,9 @@ export const es = {
   champSelectSummaryAlly: 'Aliado',
   champSelectSynergyLive: 'Sinergia: en vivo',
   champSelectSynergyEstimated: 'Sinergia: estimada',
+  champSelectInactiveTitle: 'Selección de Campeón Inactiva',
+  champSelectInactiveMessage:
+    'Inicia una partida de League of Legends para ver recomendaciones de campeones.',
 
   // Settings
   settingsTitle: 'Ajustes',

@@ -209,6 +209,26 @@ describe('computeRecommendation — required fixtures (Principle VI)', () => {
     // should only include 1 and 15, not 5 or 10 (enemy picks)
     expect(rec.entries.map((e) => e.championId).sort()).toEqual([1, 15])
   })
+
+  // spec 006 US1 AC3 — ally and enemy picks are filtered together in one pass,
+  // leaving only the champions still genuinely available to the user.
+  it('excludes pool champions locked by either team (mixed ally + enemy picks)', () => {
+    const rec = computeRecommendation(
+      input({
+        role: 'TOP',
+        enemyChampionIds: [5], // enemy locked champ 5
+        allyChampionIds: [10], // ally locked champ 10
+        poolEntries: [poolEntry(1, 'TOP'), poolEntry(5, 'TOP'), poolEntry(10, 'TOP'), poolEntry(15, 'TOP')],
+        statRows: [
+          overall(1, 'TOP', 50, 100),
+          overall(5, 'TOP', 55, 100),
+          overall(10, 'TOP', 52, 100),
+          overall(15, 'TOP', 51, 100)
+        ]
+      })
+    )
+    expect(rec.entries.map((e) => e.championId).sort((a, b) => a - b)).toEqual([1, 15])
+  })
 })
 
 describe('computeRecommendation — composition-aware combined scoring (spec 002, Principle VI)', () => {

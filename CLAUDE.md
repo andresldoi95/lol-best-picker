@@ -102,7 +102,9 @@ Vitest-testable — manual QA lives in [docs/installer-testing-guide.md](docs/in
 
 ## Active Feature Plan
 
-**Feature**: Windows User-Level Installer
-**Branch**: `005-installer-setup`
-**Plan**: [specs/005-installer-setup/plan.md](specs/005-installer-setup/plan.md)
-**Spec**: [specs/005-installer-setup/spec.md](specs/005-installer-setup/spec.md)
+<!-- SPECKIT START -->
+**Feature**: Live Champion Selection State Management
+**Branch**: `006-live-champ-select`
+**Plan**: [specs/006-live-champ-select/plan.md](specs/006-live-champ-select/plan.md)
+**Spec**: [specs/006-live-champ-select/spec.md](specs/006-live-champ-select/spec.md)
+<!-- SPECKIT END -->

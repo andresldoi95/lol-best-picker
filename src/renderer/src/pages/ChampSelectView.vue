@@ -8,6 +8,7 @@ import { usePool } from '@renderer/composables/usePool'
 import { useLocale } from '@renderer/i18n/useLocale'
 import type { Catalog } from '@renderer/i18n/types'
 import FreshnessIndicator from '@renderer/components/FreshnessIndicator.vue'
+import ChampSelectEmptyState from '@renderer/components/ChampSelectEmptyState.vue'
 
 const { recommendation, loading, load: loadRecommendation } = useRecommendation()
 const { session, load: loadSession } = useChampSelect()
@@ -28,6 +29,11 @@ onMounted(async () => {
   if (!championsLoaded.value) await refreshPool()
   await Promise.all([loadSession(), loadSettings(), loadRecommendation()])
 })
+
+// Whether a live champion select is in progress. When false (app launched with no
+// game, or the phase ended / LCU disconnected) the view shows the idle empty state
+// and the recommendation is hidden (spec 006 US3 / FR-005, FR-007).
+const isActive = computed(() => session.value?.active === true)
 
 const activeRole = computed<Role | null>(() => recommendation.value?.role ?? null)
 const entries = computed(() => recommendation.value?.entries ?? [])
@@ -132,7 +138,10 @@ function formatScore(score: number): string {
 </script>
 
 <template>
-  <div>
+  <!-- US3 / FR-005: no live champ select → idle empty state (not an error). -->
+  <ChampSelectEmptyState v-if="!isActive" />
+
+  <div v-else>
     <div class="d-flex align-center flex-wrap mb-1">
       <h1 class="text-h4 me-4">{{ t('champSelectTitle') }}</h1>
       <v-chip v-if="activeRole" color="primary" variant="flat" class="me-2">
