@@ -9,6 +9,7 @@ export const en = {
   navPool: 'Pool',
   navChampSelect: 'Champ Select',
   navBans: 'Bans',
+  navCounters: 'Counters',
   navSettings: 'Settings',
 
   // Roles
@@ -86,6 +87,27 @@ export const en = {
   banCardWinRate: '{wr}% win rate',
   banCardWinRateShort: '{wr}% WR',
   banCardPickRate: '{pr}% pick',
+
+  // Personal Counters (spec 008)
+  countersTitle: 'Personal Counters',
+  countersSubtitle:
+    'The enemy champions you lose to most, from your own recorded games — ranked by threat, independent of official stats.',
+  countersAllRoles: 'All Roles',
+  countersTierBadge: '{tier} · {games} games',
+  countersOtherTierGames: '+{n} from other tiers',
+  countersEmpty:
+    'No games recorded yet. Play some games with the app running and your personal counters will appear here.',
+  countersRoleEmpty: 'No games recorded in this role yet.',
+  counterGamesCount: '{n} games',
+  counterWinRate: '{wr}% win rate',
+  counterThreatScore: 'Threat {score}',
+  counterConfidenceConfirmed: 'Confirmed threat',
+  counterConfidenceLikely: 'Likely threat',
+  counterConfidencePotential: 'Potential threat',
+  counterConfidenceTooltip: 'Confidence grows with sample size: 1–2 games Potential, 3–9 Likely, 10+ Confirmed.',
+  countersHelpTitle: 'How threats are ranked',
+  countersHelpText:
+    'Threat score = (50 − your win rate) × how often you face them. A champion you lose to repeatedly outranks a one-off bad game. Confidence reflects how many games back the number.',
 
   // Freshness Indicator
   freshnessLive: 'Live',

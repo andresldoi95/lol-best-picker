@@ -13,6 +13,7 @@ export interface Catalog {
   navPool: string
   navChampSelect: string
   navBans: string
+  navCounters: string
   navSettings: string
 
   // Roles (shared across Pool, Champ Select, Settings)
@@ -85,6 +86,24 @@ export interface Catalog {
   banCardWinRate: string
   banCardWinRateShort: string
   banCardPickRate: string
+
+  // Personal Counters (spec 008)
+  countersTitle: string
+  countersSubtitle: string
+  countersAllRoles: string
+  countersTierBadge: string
+  countersOtherTierGames: string
+  countersEmpty: string
+  countersRoleEmpty: string
+  counterGamesCount: string
+  counterWinRate: string
+  counterThreatScore: string
+  counterConfidenceConfirmed: string
+  counterConfidenceLikely: string
+  counterConfidencePotential: string
+  counterConfidenceTooltip: string
+  countersHelpTitle: string
+  countersHelpText: string
 
   // Freshness Indicator
   freshnessLive: string

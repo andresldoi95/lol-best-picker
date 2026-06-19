@@ -27,7 +27,11 @@ export const IPC = {
 
   // Ban recommendations (spec 007)
   BAN_FETCH_RECOMMENDATIONS: 'ban:fetch-recommendations',
-  BAN_STATS_UPDATED: 'ban:stats-updated'
+  BAN_STATS_UPDATED: 'ban:stats-updated',
+
+  // Local game stats & personal counters (spec 008)
+  GAME_FETCH_COUNTERS: 'game:fetch-counters',
+  GAME_RECORD_OUTCOME: 'game:record-outcome'
 } as const
 
 export type IpcChannel = (typeof IPC)[keyof typeof IPC]
@@ -45,12 +49,14 @@ export const INVOKE_CHANNELS: readonly IpcChannel[] = [
   IPC.SETTINGS_SET_MANUAL_ROLE,
   IPC.SETTINGS_SET_STATS_FRESHNESS_HOURS,
   IPC.SETTINGS_SET_LANGUAGE,
-  IPC.BAN_FETCH_RECOMMENDATIONS
+  IPC.BAN_FETCH_RECOMMENDATIONS,
+  IPC.GAME_FETCH_COUNTERS
 ]
 
 /** Push-event channels the renderer may subscribe to (main → renderer). */
 export const EVENT_CHANNELS: readonly IpcChannel[] = [
   IPC.RECOMMENDATION_UPDATED,
   IPC.CHAMP_SELECT_SESSION_UPDATED,
-  IPC.BAN_STATS_UPDATED
+  IPC.BAN_STATS_UPDATED,
+  IPC.GAME_RECORD_OUTCOME
 ]

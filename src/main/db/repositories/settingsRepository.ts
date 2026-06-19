@@ -19,6 +19,8 @@ interface SettingsRow {
   last_ban_stats_fetch_at: string | null
   last_ban_stats_fetch_status: FetchStatus | null
   current_elo_tier: EloTier | null
+  last_game_record_fetch_at: string | null
+  last_game_record_tier: EloTier | null
 }
 
 const DEFAULTS: AppSettings = {
@@ -31,7 +33,9 @@ const DEFAULTS: AppSettings = {
   lastSynergyFetchStatus: null,
   lastBanStatsFetchAt: null,
   lastBanStatsFetchStatus: null,
-  currentEloTier: null
+  currentEloTier: null,
+  lastGameRecordFetchAt: null,
+  lastGameRecordTier: null
 }
 
 /** Read/write the single-row `app_settings` table. */
@@ -43,7 +47,8 @@ export class SettingsRepository {
       .prepare(
         `SELECT stats_freshness_hours, manual_role, last_stats_fetch_at, last_stats_fetch_status,
                 language, last_synergy_fetch_at, last_synergy_fetch_status,
-                last_ban_stats_fetch_at, last_ban_stats_fetch_status, current_elo_tier
+                last_ban_stats_fetch_at, last_ban_stats_fetch_status, current_elo_tier,
+                last_game_record_fetch_at, last_game_record_tier
          FROM app_settings WHERE id = 1`
       )
       .get() as SettingsRow | undefined
@@ -64,8 +69,21 @@ export class SettingsRepository {
       // NULL until the first ban-stats fetch / LCU tier resolution (spec 007).
       lastBanStatsFetchAt: row.last_ban_stats_fetch_at ?? null,
       lastBanStatsFetchStatus: row.last_ban_stats_fetch_status ?? null,
-      currentEloTier: row.current_elo_tier ?? null
+      currentEloTier: row.current_elo_tier ?? null,
+      // NULL until the first game capture cycle completes (spec 008).
+      lastGameRecordFetchAt: row.last_game_record_fetch_at ?? null,
+      lastGameRecordTier: row.last_game_record_tier ?? null
     }
+  }
+
+  /** Record a successful game-capture cycle: when it ran and the tier in effect, so
+   *  the counters view can show freshness and detect tier changes (spec 008). */
+  setLastGameRecord(at: string, tier: EloTier): void {
+    this.db
+      .prepare(
+        'UPDATE app_settings SET last_game_record_fetch_at = ?, last_game_record_tier = ? WHERE id = 1'
+      )
+      .run(at, tier)
   }
 
   /** Persist the ranked tier resolved from the LCU (FR-008) so the right tier's

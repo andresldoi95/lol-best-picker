@@ -10,6 +10,7 @@ export const es = {
   navPool: 'Reserva',
   navChampSelect: 'Selección',
   navBans: 'Baneos',
+  navCounters: 'Contras',
   navSettings: 'Ajustes',
 
   // Roles
@@ -90,6 +91,28 @@ export const es = {
   banCardWinRate: '{wr}% de victorias',
   banCardWinRateShort: '{wr}% VIC',
   banCardPickRate: '{pr}% selección',
+
+  // Personal Counters (spec 008)
+  countersTitle: 'Contras Personales',
+  countersSubtitle:
+    'Los campeones enemigos contra los que más pierdes, según tus propias partidas registradas — ordenados por amenaza, independiente de las estadísticas oficiales.',
+  countersAllRoles: 'Todos los Roles',
+  countersTierBadge: '{tier} · {games} partidas',
+  countersOtherTierGames: '+{n} de otros rangos',
+  countersEmpty:
+    'Aún no hay partidas registradas. Juega algunas partidas con la app abierta y tus contras personales aparecerán aquí.',
+  countersRoleEmpty: 'Aún no hay partidas registradas en este rol.',
+  counterGamesCount: '{n} partidas',
+  counterWinRate: '{wr}% de victorias',
+  counterThreatScore: 'Amenaza {score}',
+  counterConfidenceConfirmed: 'Amenaza confirmada',
+  counterConfidenceLikely: 'Amenaza probable',
+  counterConfidencePotential: 'Amenaza potencial',
+  counterConfidenceTooltip:
+    'La confianza crece con la muestra: 1–2 partidas Potencial, 3–9 Probable, 10+ Confirmada.',
+  countersHelpTitle: 'Cómo se ordenan las amenazas',
+  countersHelpText:
+    'Puntuación de amenaza = (50 − tu porcentaje de victorias) × con qué frecuencia te enfrentas a ellos. Un campeón contra el que pierdes repetidamente supera a una sola mala partida. La confianza refleja cuántas partidas respaldan el dato.',
 
   // Freshness Indicator
   freshnessLive: 'En vivo',

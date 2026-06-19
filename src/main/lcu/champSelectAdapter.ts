@@ -1,6 +1,7 @@
 import type { ChampSelectSession, EloTier } from '@shared/types'
 import { discoverCredentials, lcuGet, type LcuCredentials } from './connection'
 import { normalizeChampSelectSession, type RawLcuSession } from './normalize'
+import type { RawMatchList } from './matchHistory'
 import { normalizeLcuTier } from '@recommendation/types'
 
 export interface LcuClient {
@@ -11,6 +12,12 @@ export interface LcuClient {
   /** Current ranked tier (Solo/Duo preferred), normalized; `null` when unranked or
    *  unavailable → caller uses the default tier (FR-008/FR-009). Read-only (Principle II). */
   getCurrentRankedTier(): Promise<EloTier | null>
+  /** PUUID of the logged-in summoner; `null` when unavailable. Used to locate the
+   *  player within match-history payloads (spec 008). Read-only (Principle II). */
+  getCurrentSummonerPuuid(): Promise<string | null>
+  /** Recent completed matches for the current summoner (newest first), capped at
+   *  `count`. Returns the raw list envelope for the pure parser. Read-only (spec 008). */
+  getRecentMatches(count: number): Promise<RawMatchList | null>
   /** Subscribe to champ-select changes; returns an unsubscribe function. */
   onChampSelectUpdate(handler: (session: ChampSelectSession | null) => void): () => void
   /** Fires when the LCU connection drops (client closed / lockfile removed). */
@@ -83,6 +90,21 @@ class LcuClientImpl implements LcuClient {
     // Prefer Solo/Duo; fall back to the player's highest ranked entry across queues.
     const solo = body.queueMap?.['RANKED_SOLO_5x5']?.tier
     return normalizeLcuTier(solo ?? body.highestRankedEntry?.tier ?? null)
+  }
+
+  async getCurrentSummonerPuuid(): Promise<string | null> {
+    const { body } = await lcuGet<{ puuid?: string }>(this.creds, '/lol-summoner/v1/current-summoner')
+    return body?.puuid ?? null
+  }
+
+  async getRecentMatches(count: number): Promise<RawMatchList | null> {
+    // begIndex/endIndex are inclusive; endIndex = count-1 yields `count` newest games.
+    const endIndex = Math.max(0, count - 1)
+    const { body } = await lcuGet<RawMatchList>(
+      this.creds,
+      `/lol-match-history/v1/products/lol/current-summoner/matches?begIndex=0&endIndex=${endIndex}`
+    )
+    return body
   }
 
   /**

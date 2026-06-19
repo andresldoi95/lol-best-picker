@@ -7,8 +7,10 @@ import { SettingsRepository } from '@main/db/repositories/settingsRepository'
 import { StatsRepository } from '@main/db/repositories/statsRepository'
 import { SynergyRepository } from '@main/db/repositories/synergyRepository'
 import { BanStatsRepository } from '@main/db/repositories/banStatsRepository'
+import { GameRecordsRepository } from '@main/db/repositories/gameRecordsRepository'
 import { RecommendationService } from '@main/recommendationService'
 import { BanRecommendationService, type CurrentElo } from '@main/banRecommendationService'
+import { GameAnalyticsService } from '@main/gameAnalyticsService'
 import { seedBanStats } from '@main/stats/seedData'
 import { createTempDbFile, openSeededDb } from '../helpers/db'
 import type { DB } from '@main/db'
@@ -46,6 +48,12 @@ describe('ban:fetch-recommendations (IPC contract, spec 007 US1)', () => {
     const recService = new RecommendationService(pool, stats, synergy, settings, () => session)
     const elo: CurrentElo = opts.elo ?? { tier: 'emerald', resolved: false }
     const banService = new BanRecommendationService(banStats, settings, () => elo)
+    const gameAnalytics = new GameAnalyticsService(
+      new GameRecordsRepository(db),
+      champions,
+      settings,
+      () => elo
+    )
 
     return createHandlerMap({
       pool,
@@ -53,7 +61,8 @@ describe('ban:fetch-recommendations (IPC contract, spec 007 US1)', () => {
       settings,
       getRecommendation: () => recService.getRecommendation(),
       getChampSelectStatus: () => session,
-      getBanRecommendations: (e) => banService.get(e)
+      getBanRecommendations: (e) => banService.get(e),
+      getCounters: (filter) => gameAnalytics.getCounters(filter)
     })
   }
 
